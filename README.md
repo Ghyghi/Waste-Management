@@ -19,15 +19,22 @@ This project is a Smart Waste Management System built with Flask. It allows user
     ```
 
 2. Create a virtual environment and activate it:
+    On Mac
     ```bash
-    python3 -m venv venv
-    source venv/bin/activate
+    virtualenv <environment name>
+    source <environment name>>/bin/activate
+    ```
+    On Windows
+    ```bash
+    python3 -m venv <environment name>
+    '/<environment name>/Scripts/activate.bat'
     ```
 
 3. Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
+    On mac, if this gives you an error try "pip3"
 
 4. Configure the database in `app/config.py`.
 
@@ -35,9 +42,11 @@ This project is a Smart Waste Management System built with Flask. It allows user
     ```bash
     python run.py
     ```
+    If this gives you an error try "python3"
 
 ## Testing
 
 Run the tests with:
 ```bash
 pytest
+```
