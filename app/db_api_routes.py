@@ -1,5 +1,5 @@
 from flask import request, jsonify, current_app as app
-from app.models import db, User, WasteCollection, RecyclingEffort, Locations
+from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations
 
 def register_routes(app):
     # API Routes for User
