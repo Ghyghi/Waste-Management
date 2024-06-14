@@ -22,7 +22,7 @@ This project is a Smart Waste Management System built with Flask. It allows user
     On Mac
     ```bash
     virtualenv <environment name>
-    source <environment name>>/bin/activate
+    source <environment name>/bin/activate
     ```
     On Windows
     ```bash
@@ -34,7 +34,7 @@ This project is a Smart Waste Management System built with Flask. It allows user
     ```bash
     pip install -r requirements.txt
     ```
-    On mac, if this gives you an error try "pip3"
+    If this gives you an error try "pip3"
 
 4. Configure the database in `app/config.py`.
 
