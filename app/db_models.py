@@ -32,21 +32,29 @@ class Credentials(User):
 
 class WasteCollection(db.Model):
     __tablename__ = 'wastecollection'
-    id = db.Column(db.Integer, primary_key=True)
+
+    id = db.Column(db.Integer, unique=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)  # 'scheduled', 'in_progress', 'completed', 'cancelled', 'missed', 'delayed'
-    waste_type = db.Column(db.String(50), nullable=False) # 'general waste' , 'recylable', 'non-recyclable'
+    waste_type_id = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False) # 'general waste' , 'recylable', 'non-recyclable'
     location = db.Column(db.String(50), nullable=False)
 
 class RecyclingEffort(db.Model):
     __tablename__ = 'recyclingtracker'
-    id = db.Column(db.Integer, primary_key=True)
+
+    id = db.Column(db.Integer, unique=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    waste_type = db.Column(db.String(50), db.ForeignKey('WasteCollection.waste_type'), nullable=False)
+    waste_type_id = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False)
+
+class WasteType(db.Model):
+    __tablename__ = 'wastetype'
+    
+    id = db.Column(db.Integer, unique=True, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
 
 class Locations(db.Model):
     __tablename__ = 'locations'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, unique=True, primary_key=True)
     locations = db.Column(db.String(50), nullable=False)
