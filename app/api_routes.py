@@ -1,5 +1,5 @@
 from flask import request, jsonify, current_app as app
-from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations
+from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType
 
 def register_routes(app):
     # API Routes for User
@@ -257,6 +257,65 @@ def register_routes(app):
                 return jsonify({'message': 'Failed to delete location', 'error': str(e)}), 500
         else:
             return jsonify({'message': 'Location not found'}), 404
+        
+#API routes for WasteT0ype
+    @app.route('/api/wastetype', methods=['POST'])
+    def create_wastetype():
+        data = request.json
+        new_wastetype = WasteType(
+            name=data['name']
+        )
+        
+        try:
+            db.session.add(new_wastetype)
+            db.session.commit()
+            return jsonify({'message': 'WasteType created successfully'}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Failed to create WasteType', 'error': str(e)}), 500
+
+    @app.route('/api/wastetype', methods=['GET'])
+    def get_all_wastetype():
+        wastetypes = WasteType.query.all()
+        return jsonify([wastetype.__dict__ for wastetype in wastetypes]), 200
+
+    @app.route('/api/wastetype/<int:id>', methods=['GET'])
+    def get_wastetype(id):
+        wastetype = WasteType.query.get(id)
+        if wastetype:
+            return jsonify(wastetype.__dict__), 200
+        else:
+            return jsonify({'message': 'WasteType not found'}), 404
+
+    @app.route('/api/wastetype/<int:id>', methods=['PUT'])
+    def update_wastetype(id):
+        data = request.json
+        wastetype = WasteType.query.get(id)
+        if wastetype:
+            wastetype.name = data.get('name', wastetype.name)
+
+            try:
+                db.session.commit()
+                return jsonify({'message': 'WasteType updated successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to update WasteType', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'WasteType not found'}), 404
+
+    @app.route('/api/wastetype/<int:id>', methods=['DELETE'])
+    def delete_wastetype(id):
+        wastetype = WasteType.query.get(id)
+        if wastetype:
+            try:
+                db.session.delete(wastetype)
+                db.session.commit()
+                return jsonify({'message': 'WasteType deleted successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to delete WasteType', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'WasteType not found'})
 
 if __name__ == '__main__':
     app.run(debug=True)
