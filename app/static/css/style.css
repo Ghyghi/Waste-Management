@@ -1,0 +1,68 @@
+/* Basic Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    background-image: url("23626.jpg");
+    background-size: cover; /* Optional: Covers the entire screen */
+    background-repeat: no-repeat; /* Optional: Prevents repetition */
+}
+
+.container {
+    padding-top: 20px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #333;
+}
+
+a {
+    color: #007bff; /* Example color - change to your preference */
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Navbar Styling */
+.navbar {
+    background-color: #fff; /* Example color - change to your preference */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a shadow */
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: #333; /* Example color - change to your preference */
+}
+
+/* Modal Styling */
+.modal-content {
+    border-radius: 5px;
+}
+
+.modal-header {
+    background-color: #007bff; /* Example color - change to your preference */
+    color: #fff;
+}
+
+.modal-title {
+    font-weight: bold;
+}
+
+/* Waste Collection Schedule Section */
+.waste-schedule {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.schedule-item {
+    margin-bottom: 10px;
+}
+.modal-footer {
+    background-color: #f8f9fa; /* Example color - change to your preference */
+}
