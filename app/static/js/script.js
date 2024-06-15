@@ -1,3 +1,4 @@
+// Script.js
 // User Interaction Handlers
 function registerUser(formData) {
     // Code to handle user registration
