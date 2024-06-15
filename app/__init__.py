@@ -1,9 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mail import Mail
 
 db = SQLAlchemy()
 migrate = Migrate()
+mail = Mail()
 
 def create_app():
     app = Flask(__name__)
@@ -11,13 +13,12 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
-
-    from .db_models import User, WasteCollection, RecyclingEffort, Locations  
-    from .api_routes import register_routes
-
-    register_routes(app)
-
     with app.app_context():
+        from .db_models import User, WasteCollection, RecyclingEffort, Locations  
+        from .api_routes import register_routes
+
+        register_routes(app)
+
         db.create_all()
 
-    return app
+        return app

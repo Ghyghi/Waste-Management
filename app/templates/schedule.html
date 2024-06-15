@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Waste Collection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Schedule Waste Collection</h1>
+    <form action="{{ url_for('api.schedule_collection') }}" method="post">
+        <label for="user_id">User ID:</label>
+        <input type="text" id="user_id" name="user_id" required><br><br>
+
+        <label for="collection_date">Collection Date:</label>
+        <input type="date" id="collection_date" name="collection_date" required><br><br>
+
+        <label for="waste_type">Waste Type:</label>
+        <select id="waste_type" name="waste_type" required>
+            <option value="none"></option>
+            <option value="recyclable">Recyclable</option>
+            <option value="non_recyclable">Non-Recyclable</option>
+            <option value="general">General</option>
+        </select><br><br>
+
+        <input type="submit" value="Schedule">
+    </form>
+</body>
+</html>
