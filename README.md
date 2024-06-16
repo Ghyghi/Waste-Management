@@ -27,7 +27,7 @@ This project is a Smart Waste Management System built with Flask. It allows user
     On Windows
     ```bash
     python3 -m venv <environment name>
-    '/<environment name>/Scripts/activate.bat'
+    './<environment name>/Scripts/activate.bat'
     ```
 
 3. Install dependencies:

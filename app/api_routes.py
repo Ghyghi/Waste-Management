@@ -1,5 +1,11 @@
-from flask import request, jsonify, current_app as app
-from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations
+from flask import request, jsonify, current_app as app, render_template, redirect, url_for, flash, Blueprint
+from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
+from datetime import datetime, timedelta
+from flask_mail import Mail, Message
+
+
+mail = Mail(app)
+api = Blueprint('api', __name__)
 
 def register_routes(app):
     # API Routes for User
@@ -257,6 +263,131 @@ def register_routes(app):
                 return jsonify({'message': 'Failed to delete location', 'error': str(e)}), 500
         else:
             return jsonify({'message': 'Location not found'}), 404
+        
+    #API routes for WasteType
+    @app.route('/api/wastetype', methods=['POST'])
+    def create_wastetype():
+        data = request.json
+        new_wastetype = WasteType(
+            name=data['name']
+        )
+        
+        try:
+            db.session.add(new_wastetype)
+            db.session.commit()
+            return jsonify({'message': 'WasteType created successfully'}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Failed to create WasteType', 'error': str(e)}), 500
 
+    @app.route('/api/wastetype', methods=['GET'])
+    def get_all_wastetype():
+        wastetypes = WasteType.query.all()
+        return jsonify([wastetype.__dict__ for wastetype in wastetypes]), 200
+
+    @app.route('/api/wastetype/<int:id>', methods=['GET'])
+    def get_wastetype(id):
+        wastetype = WasteType.query.get(id)
+        if wastetype:
+            return jsonify(wastetype.__dict__), 200
+        else:
+            return jsonify({'message': 'WasteType not found'}), 404
+
+    @app.route('/api/wastetype/<int:id>', methods=['PUT'])
+    def update_wastetype(id):
+        data = request.json
+        wastetype = WasteType.query.get(id)
+        if wastetype:
+            wastetype.name = data.get('name', wastetype.name)
+
+            try:
+                db.session.commit()
+                return jsonify({'message': 'WasteType updated successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to update WasteType', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'WasteType not found'}), 404
+
+    @app.route('/api/wastetype/<int:id>', methods=['DELETE'])
+    def delete_wastetype(id):
+        wastetype = WasteType.query.get(id)
+        if wastetype:
+            try:
+                db.session.delete(wastetype)
+                db.session.commit()
+                return jsonify({'message': 'WasteType deleted successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to delete WasteType', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'WasteType not found'})
+   
+    #API routes for WasteCollectionSchedule
+    @api.route('/api/schedule', methods=['GET', 'POST'])
+    def schedule_collection():
+        if request.method == 'POST':
+            user_id = request.form['user_id']
+            collection_date = datetime.strptime(request.form['collection_date'], '%Y-%m-%dT%H:%M')
+            waste_type = request.form['waste_type']
+            new_schedule = WasteCollectionSchedule(user_id=user_id, collection_date=collection_date, waste_type=waste_type, status='scheduled')
+            db.session.add(new_schedule)
+            db.session.commit()
+            send_notification(user_id, 'Collection scheduled successfully!', 'confirmation')
+            return redirect(url_for('api.schedule_collection'))
+        return render_template('schedule.html')
+
+    @api.route('/api/update_schedule', methods=['GET', 'POST'])
+    def update_schedule():
+        if request.method == 'POST':
+
+            schedule_id = request.form['schedule_id']
+            collection_date = datetime.strptime(request.form['collection_date'], '%Y-%m-%dT%H:%M')
+            waste_type = request.form['waste_type']
+            
+            # Retrieve the schedule by ID
+            schedule = WasteCollectionSchedule.query.get(schedule_id)
+            
+            # If schedule exists, update it
+            if schedule:
+                schedule.collection_date = collection_date
+                schedule.waste_type = waste_type
+                db.session.commit()
+                send_notification(schedule.user_id, 'Collection updated successfully!', 'update')
+                return redirect(url_for('api.update_schedule'))
+            else:
+                # If schedule does not exist, return 404
+                return jsonify({'message': 'Schedule not found'}), 404
+
+        # Render the update schedule form for GET requests
+        return render_template('update_schedule.html')
+
+    def send_notification(user_id, message, notif_type):
+        notification = Notification(user_id=user_id, message=message, type=notif_type)
+        db.session.add(notification)
+        db.session.commit()
+
+        user = User.query.get(user_id)
+        print(f"Notification sent to {user.email}: {message}")
+
+    #API routes for Notification
+    @app.route('/api/notifications', methods=['GET'])
+    def send_notification(user_id, message, notif_type):
+        notification = Notification(user_id=user_id, message=message, type=notif_type)
+        db.session.add(notification)
+        db.session.commit()
+
+        user = User.query.get(user_id)
+        # Here you would send an email or notification (this is simplified)
+        print(f"Notification sent to {user.email}: {message}")
+
+    def register_routes(app):
+        app.register_blueprint(api, url_prefix='/api')
+
+    @app.route('/api/get/notifications', methods=['GET'])
+    def view_notifications():   
+        user_id = request.args.get('user_id')
+        notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.date.desc()).all()
+        return render_template('notifications.html', notifications=notifications)
 if __name__ == '__main__':
     app.run(debug=True)
