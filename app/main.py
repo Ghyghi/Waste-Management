@@ -1,22 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_sqlalchemy import SQLAlchemy  # Import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy  
+from app.db_models import db, User
+from app.api_routes import register_routes
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'  # Replace with a strong secret key
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///your_database.db'  # Configure database URI
-
-db = SQLAlchemy(app)  # Initialize SQLAlchemy
-
-# Define User Model
-class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(128), nullable=False)
-
-    def __repr__(self):
-        return f'<User {self.username}>'
 
 # Initialize Login Manager
 login_manager = LoginManager(app)
