@@ -6,6 +6,56 @@
     <title>Smart Waste Management</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css"> 
+    <style>
+        body {
+            background-image: url('./23626.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            height: 100vh; /* Ensure full viewport height */
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #333;
+        }
+        .navbar-nav .nav-link {
+            color: #333;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #007bff;
+        }
+        .modal-content {
+            border: none;
+            border-radius: 0.5rem;
+        }
+        .modal-title {
+            color: #333;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        h1 {
+            font-size: 3rem;
+            color: #333;
+            margin-top: 2rem;
+            text-align: center;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+        footer p {
+            margin-bottom: 0;
+        }
+    </style>
 </head>
 <body>
 
@@ -39,16 +89,15 @@
 </header>
 
 <main>
-    <div class="container">
+    <div class="container text-center">
         <!-- Main content area -->
         <h1>Welcome to Smart Waste Management System</h1>
-        
     </div>
 </main>
 
-<footer class="py-3 bg-light">
+<footer class="py-3">
     <div class="container">
-        <p class="m-0 text-center text-muted">Copyright &copy; Group 13 2024</p>
+        <p class="m-0 text-muted">&copy; Group 13 2024</p>
     </div>
 </footer>
 
@@ -73,7 +122,7 @@
                         <label for="password">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="submit" class="btn btn-primary btn-block">Login</button>
                 </form>
             </div>
         </div>
@@ -105,7 +154,7 @@
                         <label for="password">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="submit" class="btn btn-primary btn-block">Register</button>
                 </form>
             </div>
         </div>
@@ -115,7 +164,6 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-<script src="script.js"></script> 
 
 </body>
 </html>
