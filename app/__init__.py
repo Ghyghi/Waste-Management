@@ -14,7 +14,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     with app.app_context():
-        from .db_models import User, WasteCollection, RecyclingEffort, Locations  
+        from .db_models import User, WasteCollection, RecyclingEffort, Locations, WasteCollectionSchedule, WasteType, Credentials, Notification
         from .api_routes import register_routes
 
         register_routes(app)

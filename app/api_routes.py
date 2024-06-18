@@ -1,6 +1,7 @@
 from flask import request, jsonify, current_app as app, render_template, redirect, url_for, flash, Blueprint
 from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash
 from flask_mail import Mail, Message
 
 
@@ -10,21 +11,48 @@ api = Blueprint('api', __name__)
 def register_routes(app):
     # API Routes for User
 
-    @app.route('/api/users', methods=['POST'])
+    @app.route('/api/users', methods=['POST', 'GET'])
     def create_user():
-        data = request.json
-        new_user = User(username=data['username'],
-                        role=data['role'],
-                        email=data['email'],
-                        password=data['password'])
-        
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            return jsonify({'message': 'User created successfully'}), 201
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({'message': 'Failed to create user', 'error': str(e)}), 500
+            if request.method == 'POST':
+                if request.is_json:
+                    data = request.json
+                    username = data.get('username')
+                    password = data.get('password')
+                    role = data.get('role')
+                    email = data.get('email')
+                else:
+                    username = request.form.get('username')
+                    password = request.form.get('password')
+                    role = None
+                    email = None
+
+                # Check if username exists
+                user = User.query.filter_by(username=username).first()
+                if user:
+                    if request.is_json:
+                        return jsonify({'message': 'Username already exists.'}), 400
+                    flash('Username already exists.')
+                    return redirect(url_for('register'))
+
+                # Hash the password
+                hashed_password = generate_password_hash(password)
+
+                # Create new user in database
+                new_user = User(username=username, password=hashed_password, role=role, email=email)
+                try:
+                    db.session.add(new_user)
+                    db.session.commit()
+                    if request.is_json:
+                        return jsonify({'message': 'User created successfully'}), 201
+                    flash('Registration successful.')
+                    return redirect(url_for('login'))
+                except Exception as e:
+                    db.session.rollback()
+                    if request.is_json:
+                        return jsonify({'message': 'Failed to create user', 'error': str(e)}), 500
+                    flash('Failed to create user.')
+            return redirect(url_for('create_user'))
+    return render_template('register.html')
 
     @app.route('/api/users', methods=['GET'])
     def get_all_users():
@@ -337,13 +365,14 @@ def register_routes(app):
             return redirect(url_for('api.schedule_collection'))
         return render_template('schedule.html')
 
-    @api.route('/api/update_schedule', methods=['GET', 'POST'])
+    @app.route('/api/update_schedule', methods=['GET', 'POST'])
     def update_schedule():
         if request.method == 'POST':
-
-            schedule_id = request.form['schedule_id']
-            collection_date = datetime.strptime(request.form['collection_date'], '%Y-%m-%dT%H:%M')
-            waste_type = request.form['waste_type']
+            data = request.get_json() or request.form
+            
+            schedule_id = data.get('schedule_id')
+            collection_date = datetime.strptime(data.get('collection_date'), '%Y-%m-%d')
+            waste_type = data.get('waste_type')
             
             # Retrieve the schedule by ID
             schedule = WasteCollectionSchedule.query.get(schedule_id)
@@ -353,8 +382,9 @@ def register_routes(app):
                 schedule.collection_date = collection_date
                 schedule.waste_type = waste_type
                 db.session.commit()
+                # Assuming you have a function to send notifications
                 send_notification(schedule.user_id, 'Collection updated successfully!', 'update')
-                return redirect(url_for('api.update_schedule'))
+                return jsonify({'message': 'Schedule updated successfully!'}), 200
             else:
                 # If schedule does not exist, return 404
                 return jsonify({'message': 'Schedule not found'}), 404

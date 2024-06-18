@@ -8,7 +8,7 @@
 </head>
 <body>
     <h1>Update Waste Collection</h1>
-    <form action="{{ url_for('api.update_schedule') }}" method="post">
+    <form id="updateForm">
         <label for="schedule_id">Schedule ID:</label>
         <input type="text" id="schedule_id" name="schedule_id" required><br><br>
 
@@ -25,5 +25,41 @@
 
         <input type="submit" value="Update">
     </form>
+
+    <script>
+        document.getElementById('updateForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Prevent the default form submission
+            
+            const scheduleId = document.getElementById('schedule_id').value;
+            const collectionDate = document.getElementById('collection_date').value;
+            const wasteType = document.getElementById('waste_type').value;
+            
+            const data = {
+                schedule_id: scheduleId,
+                collection_date: collectionDate,
+                waste_type: wasteType
+            };
+
+            try {
+                const response = await fetch(`{{ url_for('/api/update_schedule') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Success: ' + JSON.stringify(result));
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.message);
+                }
+            } catch (error) {
+                alert('Error: ' + error);
+            }
+        });
+    </script>
 </body>
 </html>
