@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body>
-    <div class="container">
+    <div class="container mt-5">
         <h2>Register</h2>
+
         <form method="POST" action="{{ url_for('register') }}">
             <div class="form-group">
                 <label for="username">Username</label>
@@ -25,5 +26,6 @@
             <button type="submit" class="btn btn-primary">Register</button>
         </form>
     </div>
+
 </body>
 </html>
