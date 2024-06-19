@@ -28,7 +28,7 @@ def register_routes(app):
 
                 # Check if username exists
                 user = User.query.filter_by(username=username).first()
-                if user:
+                if user:                       
                     if request.is_json:
                         return jsonify({'message': 'Username already exists.'}), 400
                     flash('Username already exists.')
