@@ -24,6 +24,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Debug Python Version
+      run: python --version
+
     - name: Install system dependencies
       run: |
         if [[ "$RUNNER_OS" == "Linux" ]]; then
@@ -38,6 +41,17 @@ jobs:
         else
           echo "Unsupported OS: $RUNNER_OS"
           exit 1
+      shell: bash
+
+    - name: Debug System Dependencies
+      run: |
+        if [[ "$RUNNER_OS" == "Linux" ]]; then
+          dpkg -l | grep libmysqlclient-dev
+        elif [[ "$RUNNER_OS" == "macOS" ]]; then
+          mysql --version
+        elif [[ "$RUNNER_OS" == "Windows" ]]; then
+          mysql --version
+      shell: bash
 
     - name: Cache pip
       uses: actions/cache@v2
@@ -56,6 +70,16 @@ jobs:
           source venv/bin/activate
         fi
         pip install -r requirements.txt
+      shell: bash
+
+    - name: Debug Virtual Environment
+      run: |
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          venv\Scripts\python --version
+        else
+          source venv/bin/activate
+          python --version
+      shell: bash
 
     - name: Run tests
       run: |
@@ -64,3 +88,4 @@ jobs:
         else
           source venv/bin/activate
           pytest
+      shell: bash
