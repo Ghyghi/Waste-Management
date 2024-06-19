@@ -5,60 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Waste Management</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="style.css"> 
-    <style>
-        body {
-            background-image: url('./23626.jpg');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            height: 100vh; /* Ensure full viewport height */
-        }
-        .navbar-brand {
-            font-weight: bold;
-            color: #333;
-        }
-        .navbar-nav .nav-link {
-            color: #333;
-        }
-        .navbar-nav .nav-link:hover {
-            color: #007bff;
-        }
-        .modal-content {
-            border: none;
-            border-radius: 0.5rem;
-        }
-        .modal-title {
-            color: #333;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        h1 {
-            font-size: 3rem;
-            color: #333;
-            margin-top: 2rem;
-            text-align: center;
-        }
-        footer {
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: #f8f9fa;
-            text-align: center;
-        }
-        footer p {
-            margin-bottom: 0;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}"> 
 </head>
 <body>
-
 <header>
     <div class="container">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -113,10 +62,10 @@
             </div>
             <div class="modal-body">
                 <!-- Login form -->
-                <form method="POST" action="/login">
+                <form method="POST" action="/api/users/login">
                     <div class="form-group">
-                        <label for="email">Email address</label>
-                        <input type="email" class="form-control" id="email" name="email" required>
+                        <label for="id">User ID</label>
+                        <input type="number" class="form-control" id="id" name="id" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
@@ -141,18 +90,27 @@
             </div>
             <div class="modal-body">
                 <!-- Register form -->
-                <form method="POST" action="/register">
+                <form method="POST" action="/api/users">
                     <div class="form-group">
                         <label for="username">Username</label>
                         <input type="text" class="form-control" id="username" name="username" required>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email address</label>
+                        <label for="id">Email address</label>
                         <input type="email" class="form-control" id="email" name="email" required>
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Role</label>
+                        <select type="radio" class="form-control" id="role" required>
+                            <option value="none"></option>
+                            <option value="household">Household User</option>
+                            <option value="admin">Administration User</option>
+                            <option value="service">Service Provider</option>
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Register</button>
                 </form>

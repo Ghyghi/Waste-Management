@@ -11,8 +11,8 @@ class User(db.Model):
     password = db.Column(db.String(50), nullable=False)
     type = db.Column(db.String(50))  # Column for polymorphic identity
 
-    schedules = db.relationship('WasteCollectionSchedule', backref='user', lazy=True)
-    notifications = db.relationship('Notification', backref='user', lazy=True)
+    schedules = db.relationship('WasteCollectionSchedule', backref='user_ref', lazy=True)
+    notifications = db.relationship('Notification', backref='users', lazy=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'user',
@@ -41,7 +41,7 @@ class WasteCollection(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
     status = db.Column(db.String(20), nullable=False)  # 'scheduled', 'in_progress', 'completed', 'cancelled', 'missed', 'delayed'
-    waste_type_id = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False) # 'general waste' , 'recylable', 'non-recyclable'
+    waste_type = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False) # 'general waste' , 'recylable', 'non-recyclable'
     location = db.Column(db.String(50), nullable=False)
 
 class RecyclingEffort(db.Model):
@@ -64,6 +64,8 @@ class Locations(db.Model):
     locations = db.Column(db.String(50), nullable=False)
 
 class WasteCollectionSchedule(db.Model):
+    __tablename__ = 'waste_collection_schedule'
+
     id = db.Column(db.Integer, unique=True, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     collection_date = db.Column(db.DateTime, nullable=False)
@@ -71,13 +73,15 @@ class WasteCollectionSchedule(db.Model):
     status = db.Column(db.String(50), nullable=False, default='scheduled')  # 'scheduled', 'completed', etc.
     notified = db.Column(db.Boolean, default=False)  # For reminder notifications
 
-    user = db.relationship('User', backref=db.backref('schedules', lazy=True))
+    user = db.relationship('User', backref=db.backref('schedule', lazy=True))
 
 class Notification(db.Model):
+    table_name = 'notification'
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     message = db.Column(db.String(200), nullable=False)
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type = db.Column(db.String(50), nullable=False)  # 'reminder', 'confirmation', 'update', 'deletion'
 
-    user = db.relationship('User', backref=db.backref('notifications', lazy=True))
+    user = db.relationship('User', backref=db.backref('notification', lazy=True))

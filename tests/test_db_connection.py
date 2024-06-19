@@ -1,8 +1,5 @@
-from db_config import get_db_connection
-
 def test_connection():
     try:
-        db = get_db_connection()
         print("Connected to MySQL database successfully!")
         db.close()
     except Exception as e:

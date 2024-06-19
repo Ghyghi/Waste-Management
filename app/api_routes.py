@@ -1,7 +1,7 @@
-from flask import request, jsonify, current_app as app, render_template, redirect, url_for, flash, Blueprint
-from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
-from datetime import datetime, timedelta
-from werkzeug.security import generate_password_hash
+from flask import request, jsonify, current_app as app, render_template, redirect, url_for, flash, Blueprint, session
+from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification, Credentials
+from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 
 
@@ -9,52 +9,54 @@ mail = Mail(app)
 api = Blueprint('api', __name__)
 
 def register_routes(app):
+    #Route for homepage
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+    
     # API Routes for User
-
+   
     @app.route('/api/users', methods=['POST', 'GET'])
     def create_user():
-            if request.method == 'POST':
+        if request.method == 'POST':
+            if request.is_json:
+                data = request.json
+                username = data.get('username')
+                email = data.get('email')
+                password = data.get('password')
+                role = data.get('role') 
+            else:
+                username = request.form.get('username')
+                email = request.form.get('email')
+                password = request.form.get('password')
+                role = request.form.get('role')
+
+            # Check if username exists
+            user = User.query.filter_by(username=username).first()
+            if user:                       
                 if request.is_json:
-                    data = request.json
-                    username = data.get('username')
-                    password = data.get('password')
-                    role = data.get('role')
-                    email = data.get('email')
-                else:
-                    username = request.form.get('username')
-                    password = request.form.get('password')
-                    role = None
-                    email = None
+                    flash('Username already exists.', 'error')
+                return redirect(url_for('create_user'))
 
-                # Check if username exists
-                user = User.query.filter_by(username=username).first()
-                if user:                       
-                    if request.is_json:
-                        return jsonify({'message': 'Username already exists.'}), 400
-                    flash('Username already exists.')
-                    return redirect(url_for('register'))
+            # Hash the password
+            hashed_password = generate_password_hash(password)
 
-                # Hash the password
-                hashed_password = generate_password_hash(password)
+            # Create new user in database
+            new_user = User(username=username,  email=email, password=hashed_password, role=role)
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                if request.is_json:
+                    flash(f'User created successfully. User ID: {new_user.id}', 'success')
+                return redirect(url_for('login'))
+            except Exception as e:
+                db.session.rollback()
+                if request.is_json:
+                    flash('Failed to create user', 'error')
+                return redirect(url_for('create_user'))
+        return render_template('index.html')
 
-                # Create new user in database
-                new_user = User(username=username, password=hashed_password, role=role, email=email)
-                try:
-                    db.session.add(new_user)
-                    db.session.commit()
-                    if request.is_json:
-                        return jsonify({'message': 'User created successfully'}), 201
-                    flash('Registration successful.')
-                    return redirect(url_for('login'))
-                except Exception as e:
-                    db.session.rollback()
-                    if request.is_json:
-                        return jsonify({'message': 'Failed to create user', 'error': str(e)}), 500
-                    flash('Failed to create user.')
-            return redirect(url_for('create_user'))
-    return render_template('register.html')
-
-    @app.route('/api/users', methods=['GET'])
+    @app.route('/api/all-users', methods=['GET'])
     def get_all_users():
         users = User.query.all()
         return jsonify([user.__dict__ for user in users]), 200
@@ -68,7 +70,7 @@ def register_routes(app):
             return jsonify({'message': 'User not found'}), 404
 
     
-    @app.route('/api/users/<int:user_id>', methods=['PUT'])
+    @app.route('/api/update-user/<int:user_id>', methods=['PUT'])
     def update_user(user_id):
         data = request.json
         user = User.query.get(user_id)
@@ -87,7 +89,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'User not found'}), 404
 
-    @app.route('/api/users/<int:user_id>', methods=['DELETE'])
+    @app.route('/api/delete-user/<int:user_id>', methods=['DELETE'])
     def delete_user(user_id):
         user = User.query.get(user_id)
         if user:
@@ -101,6 +103,50 @@ def register_routes(app):
         else:
             return jsonify({'message': 'User not found'}), 404
 
+    @app.route('/api/users/login', methods=['POST'])
+    def login():
+        if request.method == 'POST':    
+            if request.is_json:
+                data = request.json
+                id = data.get('id')
+                password = data.get('password')
+            else:
+                id = request.form.get('id')
+                password = request.form.get('password')
+
+           
+            try:
+                user = Credentials.query.filter_by(id=id).first()
+
+                if user and check_password_hash(user.password, password):
+                    session['user_id'] = user.id
+                    session['username'] = user.username
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash('Invalid email or password.', 'error')
+
+            except Exception as e:
+                flash(f"An error occurred: {str(e)}", 'error')
+                return redirect(url_for('login'))
+
+            finally:
+                if db:
+                    db.session.close()
+        return render_template('index.html')
+
+    @app.route('/api/users/logout', methods=['GET'])
+    def logout():
+        session.pop('user_id', None)
+        session.pop('username', None)
+        return redirect(url_for('login'))
+
+    @app.route('/api/dashboard')
+    def dashboard():
+        if 'user_id' in session:
+            return f"Welcome, {session['username']}!"
+        else:
+            return redirect(url_for('login'))
 
     # API Routes for Waste Collection
 
@@ -123,12 +169,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create waste collection', 'error': str(e)}), 500
 
-    @app.route('/api/wastecollection', methods=['GET'])
+    @app.route('/api/all-wastecollection', methods=['GET'])
     def get_all_collections():
         w_collections = WasteCollection.query.all()
         return jsonify([w_collection.__dict__ for w_collection in w_collections]), 200
 
-    @app.route('/api/wastecollection/<int:id>', methods=['GET'])
+    @app.route('/api/id-wastecollection/<int:id>', methods=['GET'])
     def get_collection(id):
         w_collection = WasteCollection.query.get(id)
         if w_collection:
@@ -136,7 +182,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Collection not found'}), 404
 
-    @app.route('/api/wastecollection/<int:id>', methods=['PUT'])
+    @app.route('/api/update-wastecollection/<int:id>', methods=['PUT'])
     def update_collection(id):
         data = request.json
         w_collection = WasteCollection.query.get(id)
@@ -155,7 +201,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Collection not found'}), 404
 
-    @app.route('/api/wastecollection/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-wastecollection/<int:id>', methods=['DELETE'])
     def delete_collection(id):
         w_collection = WasteCollection.query.get(id)
         if w_collection:
@@ -171,7 +217,7 @@ def register_routes(app):
         
     # API Routes for Recycling Effort
 
-    @app.route('/api/recyclingeffort', methods=['POST'])
+    @app.route('/api/create-recyclingeffort', methods=['POST'])
     def create_recycling_effort():
         data = request.json
         new_effort = RecyclingEffort(
@@ -188,12 +234,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create recycling effort', 'error': str(e)}), 500
 
-    @app.route('/api/recyclingeffort', methods=['GET'])
+    @app.route('/api/all-recyclingeffort', methods=['GET'])
     def get_all_recycling_efforts():
         efforts = RecyclingEffort.query.all()
         return jsonify([effort.__dict__ for effort in efforts]), 200
 
-    @app.route('/api/recyclingeffort/<int:id>', methods=['GET'])
+    @app.route('/api/id-recyclingeffort/<int:id>', methods=['GET'])
     def get_recycling_effort(id):
         effort = RecyclingEffort.query.get(id)
         if effort:
@@ -201,7 +247,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Recycling effort not found'}), 404
 
-    @app.route('/api/recyclingeffort/<int:id>', methods=['PUT'])
+    @app.route('/api/update-recyclingeffort/<int:id>', methods=['PUT'])
     def update_recycling_effort(id):
         data = request.json
         effort = RecyclingEffort.query.get(id)
@@ -218,7 +264,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Recycling effort not found'}), 404
 
-    @app.route('/api/recyclingeffort/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-recyclingeffort/<int:id>', methods=['DELETE'])
     def delete_recycling_effort(id):
         effort = RecyclingEffort.query.get(id)
         if effort:
@@ -234,7 +280,7 @@ def register_routes(app):
 
     # API Routes for Locations
 
-    @app.route('/api/locations', methods=['POST'])
+    @app.route('/api/create-locations', methods=['POST'])
     def create_location():
         data = request.json
         new_location = Locations(
@@ -249,12 +295,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create location', 'error': str(e)}), 500
 
-    @app.route('/api/locations', methods=['GET'])
+    @app.route('/api/all-locations', methods=['GET'])
     def get_all_locations():
         locations = Locations.query.all()
         return jsonify([location.__dict__ for location in locations]), 200
 
-    @app.route('/api/locations/<int:id>', methods=['GET'])
+    @app.route('/api/id-locations/<int:id>', methods=['GET'])
     def get_location(id):
         location = Locations.query.get(id)
         if location:
@@ -262,7 +308,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Location not found'}), 404
 
-    @app.route('/api/locations/<int:id>', methods=['PUT'])
+    @app.route('/api/update-locations/<int:id>', methods=['PUT'])
     def update_location(id):
         data = request.json
         location = Locations.query.get(id)
@@ -278,7 +324,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Location not found'}), 404
 
-    @app.route('/api/locations/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-locations/<int:id>', methods=['DELETE'])
     def delete_location(id):
         location = Locations.query.get(id)
         if location:
@@ -293,7 +339,7 @@ def register_routes(app):
             return jsonify({'message': 'Location not found'}), 404
         
     #API routes for WasteType
-    @app.route('/api/wastetype', methods=['POST'])
+    @app.route('/api/create-wastetype', methods=['POST'])
     def create_wastetype():
         data = request.json
         new_wastetype = WasteType(
@@ -308,12 +354,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create WasteType', 'error': str(e)}), 500
 
-    @app.route('/api/wastetype', methods=['GET'])
+    @app.route('/api/all-wastetype', methods=['GET'])
     def get_all_wastetype():
         wastetypes = WasteType.query.all()
         return jsonify([wastetype.__dict__ for wastetype in wastetypes]), 200
 
-    @app.route('/api/wastetype/<int:id>', methods=['GET'])
+    @app.route('/api/id-wastetype', methods=['GET'])
     def get_wastetype(id):
         wastetype = WasteType.query.get(id)
         if wastetype:
@@ -321,7 +367,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'WasteType not found'}), 404
 
-    @app.route('/api/wastetype/<int:id>', methods=['PUT'])
+    @app.route('/api/update-wastetype', methods=['PUT'])
     def update_wastetype(id):
         data = request.json
         wastetype = WasteType.query.get(id)
@@ -337,7 +383,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'WasteType not found'}), 404
 
-    @app.route('/api/wastetype/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-wastetype', methods=['DELETE'])
     def delete_wastetype(id):
         wastetype = WasteType.query.get(id)
         if wastetype:
@@ -352,7 +398,7 @@ def register_routes(app):
             return jsonify({'message': 'WasteType not found'})
    
     #API routes for WasteCollectionSchedule
-    @api.route('/api/schedule', methods=['GET', 'POST'])
+    @api.route('/api/create-schedule', methods=['GET', 'POST'])
     def schedule_collection():
         if request.method == 'POST':
             user_id = request.form['user_id']
@@ -392,14 +438,6 @@ def register_routes(app):
         # Render the update schedule form for GET requests
         return render_template('update_schedule.html')
 
-    def send_notification(user_id, message, notif_type):
-        notification = Notification(user_id=user_id, message=message, type=notif_type)
-        db.session.add(notification)
-        db.session.commit()
-
-        user = User.query.get(user_id)
-        print(f"Notification sent to {user.email}: {message}")
-
     #API routes for Notification
     @app.route('/api/notifications', methods=['GET'])
     def send_notification(user_id, message, notif_type):
@@ -408,13 +446,9 @@ def register_routes(app):
         db.session.commit()
 
         user = User.query.get(user_id)
-        # Here you would send an email or notification (this is simplified)
         print(f"Notification sent to {user.email}: {message}")
 
-    def register_routes(app):
-        app.register_blueprint(api, url_prefix='/api')
-
-    @app.route('/api/get/notifications', methods=['GET'])
+    @app.route('/api/get-notifications', methods=['GET'])
     def view_notifications():   
         user_id = request.args.get('user_id')
         notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.date.desc()).all()

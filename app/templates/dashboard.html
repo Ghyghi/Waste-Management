@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h2>Welcome, {{ session['username'] }}</h2>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+        <a href="{{ url_for('/api/users/logout') }}" class="btn btn-danger">Logout</a>
     </div>
 </body>
 </html>
