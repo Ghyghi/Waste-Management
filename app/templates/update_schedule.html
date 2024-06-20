@@ -1,14 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Waste Collection</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Update Waste Collection{% endblock %}
+
+{% block content %}
     <h1>Update Waste Collection</h1>
-    <form id="updateForm" action="/api/wastecollectio">
+    <form id="updateForm" action="/api/update-wastecollection">
         <label for="schedule_id">Schedule ID:</label>
         <input type="text" id="schedule_id" name="schedule_id" required><br><br>
 
@@ -25,7 +21,10 @@
 
         <input type="submit" value="Update">
     </form>
+{% endblock %}
 
+{% block scripts %}
+    {{ super() }}
     <script>
         document.getElementById('updateForm').addEventListener('submit', async function(event) {
             event.preventDefault(); // Prevent the default form submission
@@ -41,7 +40,7 @@
             };
 
             try {
-                const response = await fetch(`{{ url_for('/api/update_schedule') }}`, {
+                const response = await fetch(`{{ url_for('update_schedule') }}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -61,5 +60,4 @@
             }
         });
     </script>
-</body>
-</html>
+{% endblock %}

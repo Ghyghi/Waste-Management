@@ -14,8 +14,16 @@ def register_routes(app):
     def index():
         return render_template('index.html')
     
-    # API Routes for User
+    #Route for dashboard
+    @app.route('/api/dashboard')
+    def dashboard():
+        if 'user_id' in session:
+         return render_template('dashboard.html')
+        else:
+            flash('You need to log in first.', 'error')
+            return redirect(url_for('login'))
    
+    # API Routes for User
     @app.route('/api/users', methods=['POST', 'GET'])
     def create_user():
         if request.method == 'POST':
@@ -48,6 +56,7 @@ def register_routes(app):
                 db.session.commit()
                 if request.is_json:
                     flash(f'User created successfully. User ID: {new_user.id}', 'success')
+                    flash('Please login to continue', 'info')
                 return redirect(url_for('login'))
             except Exception as e:
                 db.session.rollback()
@@ -56,12 +65,12 @@ def register_routes(app):
                 return redirect(url_for('create_user'))
         return render_template('index.html')
 
-    @app.route('/api/all-users', methods=['GET'])
+    @app.route('/api/all-users', methods=['GET', 'POST'])
     def get_all_users():
         users = User.query.all()
         return jsonify([user.__dict__ for user in users]), 200
 
-    @app.route('/api/users/<int:user_id>', methods=['GET'])
+    @app.route('/api/get-users', methods=['GET', 'POST'])
     def get_user(user_id):
         user = User.query.get(user_id)
         if user:
@@ -70,7 +79,7 @@ def register_routes(app):
             return jsonify({'message': 'User not found'}), 404
 
     
-    @app.route('/api/update-user/<int:user_id>', methods=['PUT'])
+    @app.route('/api/update-user', methods=['PUT'])
     def update_user(user_id):
         data = request.json
         user = User.query.get(user_id)
@@ -89,7 +98,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'User not found'}), 404
 
-    @app.route('/api/delete-user/<int:user_id>', methods=['DELETE'])
+    @app.route('/api/delete-user', methods=['DELETE'])
     def delete_user(user_id):
         user = User.query.get(user_id)
         if user:
@@ -103,7 +112,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'User not found'}), 404
 
-    @app.route('/api/users/login', methods=['POST'])
+    @app.route('/api/users/login', methods=['POST', 'GET'])
     def login():
         if request.method == 'POST':    
             if request.is_json:
@@ -126,6 +135,10 @@ def register_routes(app):
                 else:
                     flash('Invalid email or password.', 'error')
 
+                if not id or not password:
+                    flash('ID and password are required.', 'error')
+                return redirect(url_for('login'))
+
             except Exception as e:
                 flash(f"An error occurred: {str(e)}", 'error')
                 return redirect(url_for('login'))
@@ -135,22 +148,17 @@ def register_routes(app):
                     db.session.close()
         return render_template('index.html')
 
-    @app.route('/api/users/logout', methods=['GET'])
+    @app.route('/api/users/logout', methods=['GET', 'POST'])
     def logout():
         session.pop('user_id', None)
         session.pop('username', None)
         return redirect(url_for('login'))
 
-    @app.route('/api/dashboard')
-    def dashboard():
-        if 'user_id' in session:
-            return f"Welcome, {session['username']}!"
-        else:
-            return redirect(url_for('login'))
+
 
     # API Routes for Waste Collection
 
-    @app.route('/api/wastecollection', methods=['POST'])
+    @app.route('/api/wastecollection', methods=['POST', 'GET'])
     def create_waste_collection():
         data = request.json
         new_collection = WasteCollection(
@@ -169,12 +177,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create waste collection', 'error': str(e)}), 500
 
-    @app.route('/api/all-wastecollection', methods=['GET'])
+    @app.route('/api/all-wastecollection', methods=['GET', 'POST'])
     def get_all_collections():
         w_collections = WasteCollection.query.all()
         return jsonify([w_collection.__dict__ for w_collection in w_collections]), 200
 
-    @app.route('/api/id-wastecollection/<int:id>', methods=['GET'])
+    @app.route('/api/id-wastecollection', methods=['GET', 'POST'])
     def get_collection(id):
         w_collection = WasteCollection.query.get(id)
         if w_collection:
@@ -182,7 +190,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Collection not found'}), 404
 
-    @app.route('/api/update-wastecollection/<int:id>', methods=['PUT'])
+    @app.route('/api/update-wastecollection', methods=['PUT'])
     def update_collection(id):
         data = request.json
         w_collection = WasteCollection.query.get(id)
@@ -201,7 +209,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Collection not found'}), 404
 
-    @app.route('/api/delete-wastecollection/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-wastecollection', methods=['DELETE'])
     def delete_collection(id):
         w_collection = WasteCollection.query.get(id)
         if w_collection:
@@ -217,7 +225,7 @@ def register_routes(app):
         
     # API Routes for Recycling Effort
 
-    @app.route('/api/create-recyclingeffort', methods=['POST'])
+    @app.route('/api/create-recyclingeffort', methods=['POST', 'GET'])
     def create_recycling_effort():
         data = request.json
         new_effort = RecyclingEffort(
@@ -234,12 +242,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create recycling effort', 'error': str(e)}), 500
 
-    @app.route('/api/all-recyclingeffort', methods=['GET'])
+    @app.route('/api/all-recyclingeffort', methods=['GET', 'POST'])
     def get_all_recycling_efforts():
         efforts = RecyclingEffort.query.all()
         return jsonify([effort.__dict__ for effort in efforts]), 200
 
-    @app.route('/api/id-recyclingeffort/<int:id>', methods=['GET'])
+    @app.route('/api/id-recyclingeffort', methods=['GET', 'POST'])
     def get_recycling_effort(id):
         effort = RecyclingEffort.query.get(id)
         if effort:
@@ -247,7 +255,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Recycling effort not found'}), 404
 
-    @app.route('/api/update-recyclingeffort/<int:id>', methods=['PUT'])
+    @app.route('/api/update-recyclingeffort', methods=['PUT'])
     def update_recycling_effort(id):
         data = request.json
         effort = RecyclingEffort.query.get(id)
@@ -264,7 +272,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Recycling effort not found'}), 404
 
-    @app.route('/api/delete-recyclingeffort/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-recyclingeffort', methods=['DELETE'])
     def delete_recycling_effort(id):
         effort = RecyclingEffort.query.get(id)
         if effort:
@@ -280,7 +288,7 @@ def register_routes(app):
 
     # API Routes for Locations
 
-    @app.route('/api/create-locations', methods=['POST'])
+    @app.route('/api/create-locations', methods=['POST', 'GET'])
     def create_location():
         data = request.json
         new_location = Locations(
@@ -295,12 +303,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create location', 'error': str(e)}), 500
 
-    @app.route('/api/all-locations', methods=['GET'])
+    @app.route('/api/all-locations', methods=['GET', 'POST'])
     def get_all_locations():
         locations = Locations.query.all()
         return jsonify([location.__dict__ for location in locations]), 200
 
-    @app.route('/api/id-locations/<int:id>', methods=['GET'])
+    @app.route('/api/id-locations', methods=['GET', 'POST'])
     def get_location(id):
         location = Locations.query.get(id)
         if location:
@@ -308,7 +316,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Location not found'}), 404
 
-    @app.route('/api/update-locations/<int:id>', methods=['PUT'])
+    @app.route('/api/update-locations', methods=['PUT'])
     def update_location(id):
         data = request.json
         location = Locations.query.get(id)
@@ -324,7 +332,7 @@ def register_routes(app):
         else:
             return jsonify({'message': 'Location not found'}), 404
 
-    @app.route('/api/delete-locations/<int:id>', methods=['DELETE'])
+    @app.route('/api/delete-locations', methods=['DELETE'])
     def delete_location(id):
         location = Locations.query.get(id)
         if location:
@@ -339,7 +347,7 @@ def register_routes(app):
             return jsonify({'message': 'Location not found'}), 404
         
     #API routes for WasteType
-    @app.route('/api/create-wastetype', methods=['POST'])
+    @app.route('/api/create-wastetype', methods=['POST', 'GET'])
     def create_wastetype():
         data = request.json
         new_wastetype = WasteType(
@@ -354,12 +362,12 @@ def register_routes(app):
             db.session.rollback()
             return jsonify({'message': 'Failed to create WasteType', 'error': str(e)}), 500
 
-    @app.route('/api/all-wastetype', methods=['GET'])
+    @app.route('/api/all-wastetype', methods=['GET', 'POST'])
     def get_all_wastetype():
         wastetypes = WasteType.query.all()
         return jsonify([wastetype.__dict__ for wastetype in wastetypes]), 200
 
-    @app.route('/api/id-wastetype', methods=['GET'])
+    @app.route('/api/id-wastetype', methods=['GET', 'POST'])
     def get_wastetype(id):
         wastetype = WasteType.query.get(id)
         if wastetype:
@@ -439,7 +447,7 @@ def register_routes(app):
         return render_template('update_schedule.html')
 
     #API routes for Notification
-    @app.route('/api/notifications', methods=['GET'])
+    @app.route('/api/notifications', methods=['GET', 'POST'])
     def send_notification(user_id, message, notif_type):
         notification = Notification(user_id=user_id, message=message, type=notif_type)
         db.session.add(notification)
@@ -448,7 +456,7 @@ def register_routes(app):
         user = User.query.get(user_id)
         print(f"Notification sent to {user.email}: {message}")
 
-    @app.route('/api/get-notifications', methods=['GET'])
+    @app.route('/api/get-notifications', methods=['GET', 'POST'])
     def view_notifications():   
         user_id = request.args.get('user_id')
         notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.date.desc()).all()

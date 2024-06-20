@@ -11,8 +11,8 @@ class User(db.Model):
     password = db.Column(db.String(50), nullable=False)
     type = db.Column(db.String(50))  # Column for polymorphic identity
 
-    schedules = db.relationship('WasteCollectionSchedule', backref='user_ref', lazy=True)
-    notifications = db.relationship('Notification', backref='users', lazy=True)
+    schedules = db.relationship('WasteCollectionSchedule', overlaps="schedule,user_ref", lazy=True)
+    notifications = db.relationship('Notification', overlaps="notification,users", lazy=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'user',
@@ -73,7 +73,7 @@ class WasteCollectionSchedule(db.Model):
     status = db.Column(db.String(50), nullable=False, default='scheduled')  # 'scheduled', 'completed', etc.
     notified = db.Column(db.Boolean, default=False)  # For reminder notifications
 
-    user = db.relationship('User', backref=db.backref('schedule', lazy=True))
+    user_ref = db.relationship('User', overlaps="schedule,schedules", lazy=True)
 
 class Notification(db.Model):
     table_name = 'notification'
@@ -84,4 +84,4 @@ class Notification(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type = db.Column(db.String(50), nullable=False)  # 'reminder', 'confirmation', 'update', 'deletion'
 
-    user = db.relationship('User', backref=db.backref('notification', lazy=True))
+    users = db.relationship('User', overlaps="notification,notifications", lazy=True)
