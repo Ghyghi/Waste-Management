@@ -16,88 +16,94 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Print environment variables
-      run: env
+      - name: Print environment variables
+        run: env
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Verify Python Installation
-      run: |
-        python --version
-        which python
+      - name: Verify Python Installation
+        run: |
+          python --version
+          which python
 
-    - name: Install system dependencies
-      run: |
-        echo "Running on $RUNNER_OS"
-        if [[ "$RUNNER_OS" == "Linux" ]]; then
-          sudo apt-get update && sudo apt-get install -y libmysqlclient-dev
-        elif [[ "$RUNNER_OS" == "macOS" ]]; then
+      - name: Install system dependencies
+        if: matrix.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmysqlclient-dev
+          
+      - name: Install MySQL client on macOS
+        if: matrix.os == 'macos-latest' || matrix.os == 'macos-10.15'
+        run: |
           brew install mysql-client
           echo 'export PATH="/usr/local/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
           source ~/.zshrc
-        elif [[ "$RUNNER_OS" == "Windows" ]]; then
-          choco install mysql
-        else
-          echo "Unsupported OS: $RUNNER_OS"
-          exit 1
-        fi
-      shell: bash
 
-    - name: Verify System Dependencies
-      run: |
-        if [[ "$RUNNER_OS" == "Linux" ]]; then
-          dpkg -l | grep libmysqlclient-dev || echo "MySQL client not installed"
-        elif [[ "$RUNNER_OS" == "macOS" ]]; then
-          mysql --version || echo "MySQL client not installed"
-        elif [[ "$RUNNER_OS" == "Windows" ]]; then
-          mysql --version || echo "MySQL client not installed"
-        fi
-      shell: bash
+      - name: Install MySQL client with Chocolatey
+        if: matrix.os == 'windows-latest' || matrix.os == 'windows-2019'
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
+          choco install mysql --yes
+        shell: powershell
 
-    - name: Cache pip
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Verify System Dependencies
+        run: |
+          if [[ "${{ matrix.os }}" == "Linux" ]]; then
+            dpkg -l | grep libmysqlclient-dev || echo "MySQL client not installed"
+          elif [[ "${{ matrix.os }}" == "macos-latest" || "${{ matrix.os }}" == "macos-10.15" ]]; then
+            mysql --version || echo "MySQL client not installed"
+          elif [[ "${{ matrix.os }}" == "windows-latest" || "${{ matrix.os }}" == "windows-2019" ]]; then
+            mysql --version || echo "MySQL client not installed"
+          else
+            echo "Unsupported OS: ${{ matrix.os }}"
+            exit 1
+          fi
+        shell: bash
 
-    - name: Set up virtual environment and install dependencies
-      run: |
-        python -m venv venv
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          .\venv\Scripts\activate
-        else
-          source venv/bin/activate
-        fi
-        pip install --upgrade pip
-        pip install -r requirements.txt
-      shell: bash
+      - name: Cache pip
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
-    - name: Verify Virtual Environment and Dependencies
-      run: |
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          .\venv\Scripts\python --version
-          .\venv\Scripts\pip list
-        else
-          source venv/bin/activate
-          python --version
-          pip list
-        fi
-      shell: bash
+      - name: Set up virtual environment and install dependencies
+        run: |
+          python -m venv venv
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            .\venv\Scripts\activate
+          else
+            source venv/bin/activate
+          fi
+          pip install --upgrade pip
+          pip install -r requirements.txt
+        shell: bash
 
-    - name: Run tests
-      run: |
-        if [[ "$RUNNER_OS" == "Windows" ]]; then
-          .\venv\Scripts\pytest
-        else
-          source venv/bin/activate
-          pytest
-        fi
-      shell: bash
+      - name: Verify Virtual Environment and Dependencies
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            .\venv\Scripts\python --version
+            .\venv\Scripts\pip list
+          else
+            source venv/bin/activate
+            python --version
+            pip list
+          fi
+        shell: bash
+
+      - name: Run tests
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            .\venv\Scripts\pytest
+          else
+            source venv/bin/activate
+            pytest
+          fi
+        shell: bash
