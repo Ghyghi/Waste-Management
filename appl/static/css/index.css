@@ -1,10 +1,10 @@
 
 body {
-    background-image: url('/app/static/images/23626.jpg');
+    background-image: url('../images/23626.jpg');
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-    min-height: 100vh;
+    background-attachment: fixed;
+    
 }
 header {
     width: 100%;
