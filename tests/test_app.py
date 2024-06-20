@@ -1,7 +1,7 @@
 # tests/test_app.py
 import unittest
-from app import create_app, db
-from app.db_models import User
+from appl import create_app, db
+from appl.db_models import User
 
 class AppTestCase(unittest.TestCase):
     def setUp(self):

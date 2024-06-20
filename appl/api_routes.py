@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for, f
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
-from app.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification, Credentials
+from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification, Credentials
+from appl.notifications import send_notification
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -35,7 +36,7 @@ def register_routes(app):
                     flash('Login successful!', 'success')
                     return redirect(url_for('dashboard'))
                 else:
-                    flash('Invalid email or password.', 'error')
+                    flash('Invalid ID or password.', 'error')
                 if not id or not password:
                     flash('ID and password are required.', 'error')
                 return redirect(url_for('login'))
@@ -60,20 +61,34 @@ def register_routes(app):
             user = User.query.filter_by(username=username).first()
             if user:
                 flash('Username already exists.', 'error')
+                flash('Please choose a different username.', 'info')
                 return redirect(url_for('create_user'))
+            
             hashed_password = generate_password_hash(password)
-            new_user = User(username=username, email=email, password=hashed_password, role=role)
-            try:
-                db.session.add(new_user)
-                db.session.commit()
-                flash(f'User created successfully. User ID: {new_user.id}', 'success')
-                flash('Please login to continue', 'info')
-                return redirect(url_for('login'))
-            except Exception as e:
-                db.session.rollback()
-                flash('Failed to create user', 'error')
-                return redirect(url_for('create_user'))
+            
+
+            if user:
+                flash('Username already exists.', category='error')
+            elif len(email) < 4:
+                flash('Email must be greater than 3 characters.', category='error')
+            elif len(username) < 2:
+                flash('Username must be greater than 1 character.', category='error')
+            elif len(password) < 7:
+                flash('Password must be at least 7 characters.', category='error')
+            else:
+                new_user = User(email=email, password=generate_password_hash(password), username=username, role=role) 
+                try:
+                    db.session.add(new_user)
+                    db.session.commit()
+                    flash(f'User created successfully. User ID: {new_user.id}', 'success')
+                    flash('Please login to continue', 'info')
+                    return redirect(url_for('login'))
+                except Exception as e:
+                    db.session.rollback()
+                    flash('Failed to create user', 'error')
+                    return redirect(url_for('create_user'))
         return render_template('index.html')
+
 
     @app.route('/schedule', methods=['GET', 'POST'])
     def schedule_collection():

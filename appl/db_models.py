@@ -1,7 +1,8 @@
 from . import db
 from datetime import datetime
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
 
     id = db.Column(db.Integer, unique=True, primary_key=True)
@@ -44,6 +45,9 @@ class WasteCollection(db.Model):
     waste_type = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False) # 'general waste' , 'recylable', 'non-recyclable'
     location = db.Column(db.String(50), nullable=False)
 
+    def __repr__(self):
+        return f'<User id={self.user_id} Collection id={self.id} status={self.status}>'
+
 class RecyclingEffort(db.Model):
     __tablename__ = 'recyclingtracker'
 
@@ -52,16 +56,25 @@ class RecyclingEffort(db.Model):
     date = db.Column(db.Date, nullable=False)
     waste_type_id = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False)
 
+    def __repr__(self):
+        return f'<User id={self.id} date={self.date} Waste Type={self.waste_type_id}>'
+
 class WasteType(db.Model):
     __tablename__ = 'wastetype'
     
     id = db.Column(db.Integer, unique=True, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
 
+    def __repr__(self):
+        return f'<Waste id={self.id} Waste Type={self.username}>'
+
 class Locations(db.Model):
     __tablename__ = 'locations'
     id = db.Column(db.Integer, unique=True, primary_key=True)
     locations = db.Column(db.String(50), nullable=False)
+
+    def __repr__(self):
+        return f'<Location id={self.id} Location name={self.locations}>'
 
 class WasteCollectionSchedule(db.Model):
     __tablename__ = 'waste_collection_schedule'
@@ -75,6 +88,9 @@ class WasteCollectionSchedule(db.Model):
 
     user_ref = db.relationship('User', overlaps="schedule,schedules", lazy=True)
 
+    def __repr__(self):
+        return f'<User id={self.user_id} uWaste type={self.waste_type} Status={self.status}>'
+
 class Notification(db.Model):
     table_name = 'notification'
 
@@ -85,3 +101,6 @@ class Notification(db.Model):
     type = db.Column(db.String(50), nullable=False)  # 'reminder', 'confirmation', 'update', 'deletion'
 
     users = db.relationship('User', overlaps="notification,notifications", lazy=True)
+
+    def __repr__(self):
+        return f'<User id={self.user_id} Message={self.message} Type={self.type}>'
