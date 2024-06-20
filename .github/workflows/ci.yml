@@ -10,19 +10,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os:
-          - ubuntu-latest
-          - ubuntu-20.04
-          - ubuntu-18.04
-          - macos-latest
-          - macos-10.15
-          - windows-latest
-          - windows-2019
-        python-version:
-          - '3.12.3'
-          - '3.11'
-          - '3.10'
-          - '3.9'
+        os: [ubuntu-latest, ubuntu-20.04, ubuntu-18.04, macos-latest, macos-10.15, windows-latest, windows-2019]
+        python-version: ['3.12.3', '3.11', '3.10', '3.9']
 
     runs-on: ${{ matrix.os }}
 
@@ -30,26 +19,44 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Print environment variables
+      run: env
+
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Verify Python Installation
+      run: |
+        python --version
+        which python
+
     - name: Install system dependencies
       run: |
+        echo "Running on $RUNNER_OS"
         if [[ "$RUNNER_OS" == "Linux" ]]; then
-          sudo apt-get update
-          sudo apt-get install -y libmysqlclient-dev
+          sudo apt-get update && sudo apt-get install -y libmysqlclient-dev
         elif [[ "$RUNNER_OS" == "macOS" ]]; then
           brew install mysql-client
-          echo 'export PATH="/usr/local/opt/mysql-client/bin:$PATH"' >> ~/.bash_profile
-          source ~/.bash_profile
+          echo 'export PATH="/usr/local/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
+          source ~/.zshrc
         elif [[ "$RUNNER_OS" == "Windows" ]]; then
           choco install mysql
         else
           echo "Unsupported OS: $RUNNER_OS"
           exit 1
-        fi
+      shell: bash
+
+    - name: Verify System Dependencies
+      run: |
+        if [[ "$RUNNER_OS" == "Linux" ]]; then
+          dpkg -l | grep libmysqlclient-dev || echo "MySQL client not installed"
+        elif [[ "$RUNNER_OS" == "macOS" ]]; then
+          mysql --version || echo "MySQL client not installed"
+        elif [[ "$RUNNER_OS" == "Windows" ]]; then
+          mysql --version || echo "MySQL client not installed"
+      shell: bash
 
     - name: Cache pip
       uses: actions/cache@v2
@@ -61,20 +68,32 @@ jobs:
 
     - name: Set up virtual environment and install dependencies
       run: |
-        if [[ "$RUNNER_OS" == "Linux" || "$RUNNER_OS" == "macOS" ]]; then
-          python -m venv venv
-          source venv/bin/activate
-        elif [[ "$RUNNER_OS" == "Windows" ]]; then
-          python -m venv venv
-          venv\Scripts\activate
+        python -m venv venv
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          .\venv\Scripts\activate
         else
-          echo "Unsupported OS: $RUNNER_OS"
-          exit 1
+          source venv/bin/activate
         fi
-
-        # Install dependencies
+        pip install --upgrade pip
         pip install -r requirements.txt
+      shell: bash
+
+    - name: Verify Virtual Environment and Dependencies
+      run: |
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          .\venv\Scripts\python --version
+          .\venv\Scripts\pip list
+        else
+          source venv/bin/activate
+          python --version
+          pip list
+      shell: bash
 
     - name: Run tests
       run: |
-        pytest
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          .\venv\Scripts\pytest
+        else
+          source venv/bin/activate
+          pytest
+      shell: bash
