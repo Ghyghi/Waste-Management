@@ -58,35 +58,41 @@ def register_routes(app):
             email = request.form.get('email')
             password = request.form.get('password')
             role = request.form.get('role')
-            user = User.query.filter_by(username=username).first()
-            if user:
-                flash('Username already exists.', 'error')
-                flash('Please choose a different username.', 'info')
+            
+            # Check if the role is valid
+            valid_roles = ['household', 'admin', 'service']
+            if role not in valid_roles:
+                flash('Invalid role selected.', 'error')
                 return redirect(url_for('create_user'))
-            
-            hashed_password = generate_password_hash(password)
-            
 
-            if user:
-                flash('Username already exists.', category='error')
-            elif len(email) < 4:
-                flash('Email must be greater than 3 characters.', category='error')
+            # Check for existing username and email
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists.', 'error')
+                return redirect(url_for('create_user'))
+            if User.query.filter_by(email=email).first():
+                flash('Email already exists.', 'error')
+                return redirect(url_for('create_user'))
+
+            # Validate form inputs
+            if len(email) < 4:
+                flash('Email must be greater than 3 characters.', 'error')
             elif len(username) < 2:
-                flash('Username must be greater than 1 character.', category='error')
+                flash('Username must be greater than 1 character.', 'error')
             elif len(password) < 7:
-                flash('Password must be at least 7 characters.', category='error')
+                flash('Password must be at least 7 characters.', 'error')
             else:
-                new_user = User(email=email, password=generate_password_hash(password), username=username, role=role) 
-                try:
-                    db.session.add(new_user)
-                    db.session.commit()
-                    flash(f'User created successfully. User ID: {new_user.id}', 'success')
-                    flash('Please login to continue', 'info')
-                    return redirect(url_for('login'))
-                except Exception as e:
-                    db.session.rollback()
-                    flash('Failed to create user', 'error')
-                    return redirect(url_for('create_user'))
+                # Create new user
+                hashed_password = generate_password_hash(password)
+
+                new_user = User(email=email, password=hashed_password, username=username, role=role) 
+                
+                db.session.add(new_user)
+                db.session.commit()
+                flash(f'User created successfully. User ID: {new_user.id}', 'success')
+                flash('Please login to continue', 'info')
+                return redirect(url_for('login'))
+                
+        
         return render_template('index.html')
 
 

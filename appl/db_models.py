@@ -9,7 +9,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     role = db.Column(db.String(20), nullable=False)  # 'household', 'service', 'admin'
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     type = db.Column(db.String(50))  # Column for polymorphic identity
 
     schedules = db.relationship('WasteCollectionSchedule', overlaps="schedule,user_ref", lazy=True)
