@@ -34,11 +34,11 @@ jobs:
           which python
         shell: bash
 
-      - name: Install system dependencies on Linux
+      - name: Install system dependencies on Ubuntu
         if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-18.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libmysqlclient-dev
+          sudo apt-get install -y libmysqlclient-dev pkg-config
         shell: bash
 
       - name: Install MySQL client on macOS
@@ -54,6 +54,8 @@ jobs:
         run: |
           Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
           choco install mysql --yes
+          echo 'export PATH="/c/tools/mysql/current/bin:$PATH"' >> $env:GITHUB_ENV
+          Refresh-Env
         shell: powershell
 
       - name: Verify System Dependencies
