@@ -46,6 +46,7 @@ jobs:
         else
           echo "Unsupported OS: $RUNNER_OS"
           exit 1
+        fi
       shell: bash
 
     - name: Verify System Dependencies
@@ -56,6 +57,7 @@ jobs:
           mysql --version || echo "MySQL client not installed"
         elif [[ "$RUNNER_OS" == "Windows" ]]; then
           mysql --version || echo "MySQL client not installed"
+        fi
       shell: bash
 
     - name: Cache pip
@@ -87,6 +89,7 @@ jobs:
           source venv/bin/activate
           python --version
           pip list
+        fi
       shell: bash
 
     - name: Run tests
@@ -96,4 +99,5 @@ jobs:
         else
           source venv/bin/activate
           pytest
+        fi
       shell: bash
