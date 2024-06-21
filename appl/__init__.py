@@ -4,25 +4,26 @@ from flask_migrate import Migrate
 from flask_mail import Mail
 import os
 
+# Initialize Flask extensions
 db = SQLAlchemy()
 migrate = Migrate()
 mail = Mail()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object('appl.config.Config')
+    app.config.from_object('appl.config.Config')  # Load configuration from config.py
 
-    # Initialize extensions
+    # Initialize extensions with the Flask application
     db.init_app(app)
     migrate.init_app(app, db)
     mail.init_app(app)
 
     with app.app_context():
-        # Import models and register routes within the app context
-        import appl.db_models
-        from .api_routes import register_routes
+        # Import models and register routes within the app context to avoid circular imports
+        import appl.db_models  # Importing models
+        from .api_routes import register_routes  # Assuming you have a module for API routes
 
-        register_routes(app)
+        register_routes(app)  # Registering routes
 
         # Ensure the database is created (if not already exists)
         create_database()
@@ -32,6 +33,7 @@ def create_app():
 def create_database():
     # Create database tables if they don't exist
     with db.engine.connect() as connection:
-        if not db.engine.dialect.has_table(connection, 'your_table_name'):
-            db.create_all()
-            print('Database created!')
+        db.reflect()  # Reflect the existing database tables
+        db.create_all()  # Create all tables defined in the models
+
+        print('Database created!')
