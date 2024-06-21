@@ -80,7 +80,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      - name: Install dependencies
+      - name: Set up virtual environment and install dependencies
         run: |
           python -m venv venv
           if [[ "${{ matrix.os }}" == "windows-latest" || "${{ matrix.os }}" == "windows-2019" ]]; then
