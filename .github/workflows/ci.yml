@@ -44,11 +44,9 @@ jobs:
       - name: Install MySQL client on macOS
         if: matrix.os == 'macos-latest' || matrix.os == 'macos-10.15'
         run: |
-          brew install mysql-client pkg-config
+          brew install mysql-client
           echo 'export PATH="/usr/local/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
           source ~/.zshrc
-          echo 'export MYSQLCLIENT_CFLAGS=$(mysql_config --cflags)' >> $GITHUB_ENV
-          echo 'export MYSQLCLIENT_LDFLAGS=$(mysql_config --libs)' >> $GITHUB_ENV
         shell: bash
 
       - name: Install MySQL client on Windows
