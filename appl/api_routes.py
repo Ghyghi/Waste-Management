@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, Blueprint, session
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_mail import Mail, Message
+from flask_mail import Mail
 from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification, Credentials
 from appl.notifications import send_notification
 
@@ -28,21 +27,27 @@ def register_routes(app):
         if request.method == 'POST':
             id = request.form.get('id')
             password = request.form.get('password')
+
+            if not id or not password:
+                flash('ID and password are required.', 'error')
+                return redirect(url_for('login'))
+
             try:
-                user = Credentials.query.filter_by(id=id).first()
-                if user and check_password_hash(user.password, password):
+                user = User.query.filter_by(id=id).first()
+
+                if user and user.password == password:
                     session['user_id'] = user.id
                     session['username'] = user.username
                     flash('Login successful!', 'success')
                     return redirect(url_for('dashboard'))
                 else:
                     flash('Invalid ID or password.', 'error')
-                if not id or not password:
-                    flash('ID and password are required.', 'error')
-                return redirect(url_for('login'))
+                    return redirect(url_for('login'))
+
             except Exception as e:
                 flash(f"An error occurred: {str(e)}", 'error')
                 return redirect(url_for('login'))
+
         return render_template('index.html')
 
     @app.route('/logout')
@@ -79,12 +84,11 @@ def register_routes(app):
             elif len(username) < 2:
                 flash('Username must be greater than 1 character.', 'error')
             elif len(password) < 7:
-                flash('Password must be at least 7 characters.', 'error')
+                    flash('Password must be at least 7 characters.', 'error')
             else:
                 # Create new user
-                hashed_password = generate_password_hash(password)
 
-                new_user = User(email=email, password=hashed_password, username=username, role=role) 
+                new_user = User(email=email, password=password, username=username, role=role) 
                 
                 db.session.add(new_user)
                 db.session.commit()
@@ -94,7 +98,6 @@ def register_routes(app):
                 
         
         return render_template('index.html')
-
 
     @app.route('/schedule', methods=['GET', 'POST'])
     def schedule_collection():

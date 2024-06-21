@@ -14,11 +14,11 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
-    migrate.init_app(app, db)
+    migrate.init_app(app, db) 
     mail.init_app(app)
 
     with app.app_context():
-        # Import models and register routes within the app context
+        # Import models and register routes 
         import appl.db_models
         from .api_routes import register_routes
 

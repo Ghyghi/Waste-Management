@@ -1,20 +1,18 @@
 from . import db
 from datetime import datetime
-from flask_login import UserMixin
 
-class User(db.Model, UserMixin):
+class User(db.Model):
     __tablename__ = 'user'
-    __table_args__ = {'extend_existing': True}
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     role = db.Column(db.String(20), nullable=False)  # 'household', 'service', 'admin'
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     type = db.Column(db.String(50))  # Column for polymorphic identity
 
-    schedules = db.relationship('WasteCollectionSchedule', backref='user', lazy=True)
-    notifications = db.relationship('Notification', backref='user', lazy=True)
+    user_schedules_rel = db.relationship('WasteCollectionSchedule', backref='user_rel', lazy=True)
+    user_notifications_rel = db.relationship('Notification', backref='user_rel', lazy=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'user',
@@ -27,9 +25,7 @@ class User(db.Model, UserMixin):
 class Credentials(User):
     __tablename__ = 'credentials'
 
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    # Add more specific columns for Credentials if needed
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, autoincrement=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'credentials',
@@ -58,7 +54,8 @@ class RecyclingEffort(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     date = db.Column(db.Date, nullable=False)
-    waste_type_id = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False)
+    waste_name = db.Column(db.String(55), db.ForeignKey('wastetype.name'), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
         return f'<RecyclingEffort id={self.id} user_id={self.user_id} date={self.date} waste_type_id={self.waste_type_id}>'
@@ -66,7 +63,7 @@ class RecyclingEffort(db.Model):
 class WasteType(db.Model):
     __tablename__ = 'wastetype'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, unique=True , primary_key=True, nullable=False, autoincrement=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
 
     def __repr__(self):
@@ -75,8 +72,8 @@ class WasteType(db.Model):
 class Locations(db.Model):
     __tablename__ = 'locations'
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(55), nullable=False)
 
     def __repr__(self):
         return f'<Location id={self.id} name={self.name}>'
@@ -91,7 +88,7 @@ class WasteCollectionSchedule(db.Model):
     status = db.Column(db.String(50), nullable=False, default='scheduled')  # 'scheduled', 'completed', etc.
     notified = db.Column(db.Boolean, default=False)  # For reminder notifications
 
-    user = db.relationship('User', backref='schedules', lazy=True)
+    user_nrel = db.relationship('User', backref='waste_collection_schedules', lazy=True)
 
     def __repr__(self):
         return f'<WasteCollectionSchedule id={self.id} user_id={self.user_id} collection_date={self.collection_date} status={self.status}>'
@@ -105,7 +102,7 @@ class Notification(db.Model):
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     type = db.Column(db.String(50), nullable=False)  # 'reminder', 'confirmation', 'update', 'deletion'
 
-    user = db.relationship('User', backref='notifications', lazy=True)
+    user_nrel = db.relationship('User', backref='notifications_rel', lazy=True)
 
     def __repr__(self):
         return f'<Notification id={self.id} user_id={self.user_id} message={self.message} type={self.type}>'
