@@ -1,105 +1,282 @@
-from . import db
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, Blueprint, session
 from datetime import datetime
-from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
+from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification, Credentials
+from appl.notifications import send_notification
 
-class User(db.Model, UserMixin):
-    __tablename__ = 'user'
+app = Flask(__name__)
+mail = Mail(app)
+api = Blueprint('api', __name__)
 
-    id = db.Column(db.Integer, unique=True, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    role = db.Column(db.String(20), nullable=False)  # 'household', 'service', 'admin'
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-    type = db.Column(db.String(50))  # Column for polymorphic identity
-
-    schedules = db.relationship('WasteCollectionSchedule', backref='user', lazy=True)
-    notifications = db.relationship('Notification', backref='user', lazy=True)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'user',
-        'polymorphic_on': type
-    }
-
-    def __repr__(self):
-        return f'<User id={self.id} username={self.username} role={self.role}>'
-
-class Credentials(User):
-    __tablename__ = 'credentials'
-    id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
-
-    __mapper_args__ = {
-        'polymorphic_identity': 'credentials',
-        'inherit_condition': (id == User.id)
-    }
-
-    def __repr__(self):
-        return f'<Credentials id={self.id} email={self.email}>'
-
-class WasteCollection(db.Model):
-    __tablename__ = 'waste_collection'
-
-    id = db.Column(db.Integer, unique=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(20), nullable=False)  # 'scheduled', 'in_progress', 'completed', 'cancelled', 'missed', 'delayed'
-    waste_type_id = db.Column(db.Integer, db.ForeignKey('waste_type.id'), nullable=False)
-    location = db.Column(db.String(50), nullable=False)
-
-    def __repr__(self):
-        return f'<User id={self.user_id} Collection id={self.id} status={self.status}>'
-
-class RecyclingEffort(db.Model):
-    __tablename__ = 'recycling_effort'
-
-    id = db.Column(db.Integer, primary_key=True)
-    date = db.Column(db.Date, nullable=False)
-    weight = db.Column(db.Float, nullable=False)
-    waste_type_id = db.Column(db.Integer, db.ForeignKey('waste_type.id'), nullable=False)
-
-    waste_type = db.relationship('WasteType', backref=db.backref('efforts', lazy=True))
-
-    def __repr__(self):
-        return f'<RecyclingEffort id={self.id} date={self.date} Waste Type={self.waste_type_id}>'
-
-class WasteType(db.Model):
-    __tablename__ = 'waste_type'
+def register_routes(app):
+    # Web App Routes
+    @app.route('/')
+    def index():
+        return render_template('index.html')
     
-    id = db.Column(db.Integer, unique=True, primary_key=True)
-    name = db.Column(db.String(50), unique=True, nullable=False)
+    @app.route('/dashboard')
+    def dashboard():
+        if 'user_id' in session:
+            return render_template('dashboard.html')
+        else:
+            flash('You need to log in first.', 'error')
+            return redirect(url_for('login'))
 
-    def __repr__(self):
-        return f'<WasteType id={self.id} name={self.name}>'
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if request.method == 'POST':
+            id = request.form.get('id')
+            password = request.form.get('password')
+            try:
+                user = Credentials.query.filter_by(id=id).first()
+                if user and check_password_hash(user.password, password):
+                    session['user_id'] = user.id
+                    session['username'] = user.username
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash('Invalid ID or password.', 'error')
+                if not id or not password:
+                    flash('ID and password are required.', 'error')
+                return redirect(url_for('login'))
+            except Exception as e:
+                flash(f"An error occurred: {str(e)}", 'error')
+                return redirect(url_for('login'))
+        return render_template('index.html')
 
-class Location(db.Model):  # Changed from Locations to Location
-    __tablename__ = 'location'
-    id = db.Column(db.Integer, unique=True, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)  # Changed from locations to name
+    @app.route('/logout')
+    def logout():
+        session.pop('user_id', None)
+        session.pop('username', None)
+        return redirect(url_for('login'))
 
-    def __repr__(self):
-        return f'<Location id={self.id} name={self.name}>'
+    @app.route('/create_user', methods=['POST', 'GET'])
+    def create_user():
+        if request.method == 'POST':
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            role = request.form.get('role')
+            
+            # Check if the role is valid
+            valid_roles = ['household', 'admin', 'service']
+            if role not in valid_roles:
+                flash('Invalid role selected.', 'error')
+                return redirect(url_for('create_user'))
 
-class WasteCollectionSchedule(db.Model):
-    __tablename__ = 'waste_collection_schedule'
+            # Check for existing username and email
+            if User.query.filter_by(username=username).first():
+                flash('Username already exists.', 'error')
+                return redirect(url_for('create_user'))
+            if User.query.filter_by(email=email).first():
+                flash('Email already exists.', 'error')
+                return redirect(url_for('create_user'))
 
-    id = db.Column(db.Integer, unique=True, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    collection_date = db.Column(db.DateTime, nullable=False)
-    waste_type = db.Column(db.String(50), nullable=False)
-    status = db.Column(db.String(50), nullable=False, default='scheduled')  # 'scheduled', 'completed', etc.
-    notified = db.Column(db.Boolean, default=False)  # For reminder notifications
+            # Validate form inputs
+            if len(email) < 4:
+                flash('Email must be greater than 3 characters.', 'error')
+            elif len(username) < 2:
+                flash('Username must be greater than 1 character.', 'error')
+            elif len(password) < 7:
+                flash('Password must be at least 7 characters.', 'error')
+            else:
+                # Create new user
+                hashed_password = generate_password_hash(password)
 
-    def __repr__(self):
-        return f'<WasteCollectionSchedule id={self.id} user_id={self.user_id} Waste type={self.waste_type} Status={self.status}>'
+                new_user = User(email=email, password=hashed_password, username=username, role=role) 
+                
+                db.session.add(new_user)
+                db.session.commit()
+                flash(f'User created successfully. User ID: {new_user.id}', 'success')
+                flash('Please login to continue', 'info')
+                return redirect(url_for('login'))
+                
+        
+        return render_template('index.html')
 
-class Notification(db.Model):
-    __tablename__ = 'notification'
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    message = db.Column(db.String(200), nullable=False)
-    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    type = db.Column(db.String(50), nullable=False)  # 'reminder', 'confirmation', 'update', 'deletion'
+    @app.route('/schedule', methods=['GET', 'POST'])
+    def schedule_collection():
+        if request.method == 'POST':
+            user_id = request.form['user_id']
+            collection_date = datetime.strptime(request.form['collection_date'], '%Y-%m-%dT%H:%M')
+            waste_type = request.form['waste_type']
+            new_schedule = WasteCollectionSchedule(user_id=user_id, collection_date=collection_date, waste_type=waste_type, status='scheduled')
+            db.session.add(new_schedule)
+            db.session.commit()
+            send_notification(user_id, 'Collection scheduled successfully!', 'confirmation')
+            return redirect(url_for('schedule_collection'))
+        return render_template('schedule.html')
 
-    def __repr__(self):
-        return f'<Notification id={self.id} user_id={self.user_id} Message={self.message} Type={self.type}>'
+    @app.route('/update_schedule', methods=['GET', 'POST'])
+    def update_schedule():
+        if request.method == 'POST':
+            data = request.form
+            schedule_id = data.get('schedule_id')
+            collection_date = datetime.strptime(data.get('collection_date'), '%Y-%m-%d')
+            waste_type = data.get('waste_type')
+            schedule = WasteCollectionSchedule.query.get(schedule_id)
+            if schedule:
+                schedule.collection_date = collection_date
+                schedule.waste_type = waste_type
+                db.session.commit()
+                send_notification(schedule.user_id, 'Collection updated successfully!', 'update')
+                flash('Schedule updated successfully!', 'success')
+            else:
+                flash('Schedule not found.', 'error')
+            return redirect(url_for('update_schedule'))
+        return render_template('update_schedule.html')
+
+    @app.route('/notifications', methods=['GET'])
+    def view_notifications():
+        user_id = session.get('user_id')
+        if not user_id:
+            flash('You need to log in first.', 'error')
+            return redirect(url_for('login'))
+        notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.date.desc()).all()
+        return render_template('notifications.html', notifications=notifications)
+
+    # API Routes
+    @api.route('/users', methods=['POST'])
+    def api_create_user():
+        if not request.is_json:
+            return jsonify({'message': 'Unsupported Media Type'}), 415
+        data = request.json
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        role = data.get('role')
+        user = User.query.filter_by(username=username).first()
+        if user:
+            return jsonify({'message': 'Username already exists.'}), 409
+        hashed_password = generate_password_hash(password)
+        new_user = User(username=username, email=email, password=hashed_password, role=role)
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify({'message': 'User created successfully', 'user_id': new_user.id}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Failed to create user', 'error': str(e)}), 500
+
+    @api.route('/users/<int:user_id>', methods=['GET'])
+    def api_get_user(user_id):
+        user = User.query.get(user_id)
+        if user:
+            return jsonify(user.__dict__), 200
+        else:
+            return jsonify({'message': 'User not found'}), 404
+
+    @api.route('/users', methods=['GET'])
+    def api_get_all_users():
+        users = User.query.all()
+        return jsonify([user.__dict__ for user in users]), 200
+
+    @api.route('/users/<int:user_id>', methods=['PUT'])
+    def api_update_user(user_id):
+        if not request.is_json:
+            return jsonify({'message': 'Unsupported Media Type'}), 415
+        data = request.json
+        user = User.query.get(user_id)
+        if user:
+            user.username = data.get('username', user.username)
+            user.role = data.get('role', user.role)
+            user.email = data.get('email', user.email)
+            user.password = generate_password_hash(data.get('password')) if data.get('password') else user.password
+            try:
+                db.session.commit()
+                return jsonify({'message': 'User updated successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to update user', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'User not found'}), 404
+
+    @api.route('/users/<int:user_id>', methods=['DELETE'])
+    def api_delete_user(user_id):
+        user = User.query.get(user_id)
+        if user:
+            try:
+                db.session.delete(user)
+                db.session.commit()
+                return jsonify({'message': 'User deleted successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to delete user', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'User not found'}), 404
+
+    @api.route('/wastecollection', methods=['POST'])
+    def api_create_waste_collection():
+        if not request.is_json:
+            return jsonify({'message': 'Unsupported Media Type'}), 415
+        data = request.json
+        new_collection = WasteCollection(
+            user_id=data['user_id'],
+            date=data['date'],
+            status=data['status'],
+            waste_type=data['waste_type'],
+            location=data['location']
+        )
+        try:
+            db.session.add(new_collection)
+            db.session.commit()
+            return jsonify({'message': 'Waste collection created successfully'}), 201
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'message': 'Failed to create waste collection', 'error': str(e)}), 500
+
+    @api.route('/wastecollection', methods=['GET'])
+    def api_get_all_collections():
+        w_collections = WasteCollection.query.all()
+        return jsonify([w_collection.__dict__ for w_collection in w_collections]), 200
+
+    @api.route('/wastecollection/<int:id>', methods=['GET'])
+    def api_get_collection(id):
+        w_collection = WasteCollection.query.get(id)
+        if w_collection:
+            return jsonify(w_collection.__dict__), 200
+        else:
+            return jsonify({'message': 'Collection not found'}), 404
+
+    @api.route('/wastecollection/<int:id>', methods=['PUT'])
+    def api_update_collection(id):
+        if not request.is_json:
+            return jsonify({'message': 'Unsupported Media Type'}), 415
+        data = request.json
+        w_collection = WasteCollection.query.get(id)
+        if w_collection:
+            w_collection.date = data.get('date', w_collection.date)
+            w_collection.status = data.get('status', w_collection.status)
+            w_collection.waste_type = data.get('waste_type', w_collection.waste_type)
+            w_collection.location = data.get('location', w_collection.location)
+            try:
+                db.session.commit()
+                return jsonify({'message': 'Collection updated successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to update collection', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'Collection not found'}), 404
+
+    @api.route('/wastecollection/<int:id>', methods=['DELETE'])
+    def api_delete_collection(id):
+        w_collection = WasteCollection.query.get(id)
+        if w_collection:
+            try:
+                db.session.delete(w_collection)
+                db.session.commit()
+                return jsonify({'message': 'Collection deleted successfully'}), 200
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'message': 'Failed to delete collection', 'error': str(e)}), 500
+        else:
+            return jsonify({'message': 'Collection not found'}), 404
+
+    # Register the blueprint
+    app.register_blueprint(api, url_prefix='/api')
+
+if __name__ == '__main__':
+    register_routes(app)
+    app.run(debug=True)
