@@ -5,6 +5,18 @@
 {% block content %}
 <div class="container">
     <h2>Welcome, {{ session['username'] }}</h2>
-    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+</div>
+<div class="explanations">
+    <p class="lead">Welcome to Smart Waste, where you can monitor your contribution to a green earth</p>
+    <h3>These are some of the things you need to know when using the system</h3>
+    <dl>
+        <p>The types of wastes</p>
+        <dt>Recyclable Waste</dt>
+        <dd>These are wastes that can be recycled. They include paper, plastic, glass, and metal.</dd>
+        <dt>Non-Recyclabe Waste</dt>
+        <dd>These are wastes that cannot be recycled. They include food waste, used tissues, and sanitary towels.</dd>
+        <dt>General Waste</dt>
+        <dd>These are wastes that do not fit into the other categories. They include broken glass, ceramics, and mirrors.</dd>
+    </dl>
 </div>
 {% endblock %}
