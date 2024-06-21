@@ -3,5 +3,139 @@
 {% block title %}Welcome - Smart Waste Management{% endblock %}
 
 {% block content %}
-    <h1>Welcome to Smart Waste</h1>
-{% endblock %}
+<div class="jumbotron jumbotron-fluid text-center text-white" style="background-color: #a8dadc;">
+    <div class="container">
+        <h1 class="display-4" style="color: #1d3557;">Smart Waste Management</h1>
+        <p class="lead" style="color: #457b9d;">Efficient and Sustainable Waste Management Solutions</p>
+        <a href="#" class="btn btn-primary btn-lg" style="background-color: #1d3557; border-color: #1d3557;" data-toggle="modal" data-target="#signupModal">Get Started</a>
+    </div>
+</div>
+
+<main>
+    <div class="container">
+        <!-- Feature Section -->
+        <section class="feature-section">
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/environmental impact.avif') }}" alt="Environmental Impact" class="feature-image">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Environmental Impact</h3>
+                            <p class="feature-description">Understanding and mitigating environmental impact.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/recycle.avif') }}" alt="Recycle" class="feature-image">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Recycle</h3>
+                            <p class="feature-description">Encouraging recycling practices for a cleaner environment.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/quality service.avif') }}" alt="Quality Service" class="feature-image">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Quality Service</h3>
+                            <p class="feature-description">Ensuring high standards of service delivery.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/eco-friendly.avif') }}" alt="Eco-friendly" class="feature-image" style="height: auto; max-height: 200px;">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Eco-friendly</h3>
+                            <p class="feature-description">Promoting eco-friendly practices and solutions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/schedule.avif') }}" alt="Schedule" class="feature-image" style="height: auto; max-height: 200px;">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Schedule</h3>
+                            <p class="feature-description">Manage waste collection schedules efficiently.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/236267.jpg') }}" alt="Cleaning Dusterbin" class="feature-image">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Cleaning Dusterbin</h3>
+                            <p class="feature-description">Manage your waste collection schedule with ease.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/Cleanest-city-in-africa-Kigali.jpg') }}" alt="Good Nature" class="feature-image">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Good Nature</h3>
+                            <p class="feature-description">Track your recycling efforts and reduce environmental impact.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="feature-item">
+                        <img src="{{ url_for('static', filename='images/customer support.avif') }}" alt="Customer Support" class="feature-image">
+                        <div class="feature-content">
+                            <h3 class="feature-title">Customer Support</h3>
+                            <p class="feature-description">Assistance available for any issues or questions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</main>
+
+<style>
+    .feature-section {
+        margin-top: 50px;
+    }
+
+    .feature-item {
+        text-align: center;
+    }
+
+    .feature-image {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-content {
+        padding: 20px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        margin-top: 10px;
+    }
+
+    .feature-title {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #1d3557;
+    }
+
+    .feature-description {
+        font-size: 16px;
+        color: #333;
+    }
+
+    @media (max-width: 992px) {
+        .mb-4 {
+            margin-bottom: 1.5rem !important;
+        }
+    }
+</style>
+
+{% endblock %}
