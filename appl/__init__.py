@@ -4,7 +4,7 @@ from flask_migrate import Migrate
 from flask_mail import Mail
 import os
 
-
+db = SQLAlchemy()
 migrate = Migrate()
 mail = Mail()
 
