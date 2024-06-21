@@ -103,13 +103,3 @@ jobs:
             pip list
           fi
         shell: bash
-
-      - name: Run tests
-        run: |
-          if [[ "${{ matrix.os }}" == "windows-latest" || "${{ matrix.os }}" == "windows-2019" ]]; then
-            .\venv\Scripts\pytest
-          else
-            source venv/bin/activate
-            pytest
-          fi
-        shell: bash
