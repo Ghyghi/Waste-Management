@@ -1,6 +1,7 @@
 from . import db
 from datetime import datetime
 from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
@@ -25,13 +26,13 @@ class User(db.Model, UserMixin):
 
 class Credentials(User):
     __tablename__ = 'credentials'
-
     id = db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True)
 
     __mapper_args__ = {
         'polymorphic_identity': 'credentials',
         'inherit_condition': (id == User.id)
     }
+
     def __repr__(self):
         return f'<Credentials id={self.id} email={self.email}>'
 
