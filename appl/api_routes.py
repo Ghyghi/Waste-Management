@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask_mail import Mail
 from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
 from appl.notifications import send_notification
+from werkzeug.exceptions import BadRequestKeyError
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -147,16 +148,34 @@ def register_routes(app):
     @app.route('/schedule', methods=['GET', 'POST'])
     def schedule_collection():
         if request.method == 'POST':
-            username = request.form['username']
-            collection_date = datetime.strptime(request.form['collection_date'], '%Y-%m-%dT%H:%M')
-            waste_type = request.form['waste_type']
-            new_schedule = WasteCollectionSchedule(username=username, collection_date=collection_date, waste_type=waste_type, status='scheduled')
-            db.session.add(new_schedule)
-            db.session.commit()
-            send_notification(username, 'Collection scheduled successfully!', 'confirmation')
-            flash_message('Collection scheduled successfully!', 'success')
-            return redirect(url_for('schedule_collection'))
-        return render_template('schedule.html')
+            try:
+                username = request.form.get('username')
+                location = request.form.get('location')
+                collection_date = datetime.strptime(request.form.get('collection_date'), '%Y-%m-%d')
+                waste_type = request.form.get('waste_type')
+
+                if not username or not location or not collection_date or not waste_type or location == 'none':
+                    flash('All fields are required!', 'danger')
+                    return redirect(url_for('schedule_collection'))
+
+                new_schedule = WasteCollectionSchedule(
+                    username=username,
+                    location=location,
+                    collection_date=collection_date,
+                    waste_type=waste_type,
+                    status='scheduled'
+                )
+                db.session.add(new_schedule)
+                db.session.commit()
+                send_notification(username, 'Collection scheduled successfully!', 'confirmation')
+                flash('Collection scheduled successfully!', 'success')
+                return redirect(url_for('schedule_collection'))
+            
+            except Exception as e:
+                flash(f'An error occurred: {str(e)}', 'danger')
+                return redirect(url_for('schedule_collection'))
+        today = datetime.today().strftime('%Y-%m-%d')
+        return render_template('schedule.html', today=today)
 
     @app.route('/update_schedule', methods=['GET', 'POST'])
     def update_schedule():

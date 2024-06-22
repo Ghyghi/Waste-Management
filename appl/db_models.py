@@ -74,6 +74,7 @@ class WasteCollectionSchedule(db.Model):
     waste_type = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(50), nullable=False, default='scheduled')  # 'scheduled', 'completed', etc.
     notified = db.Column(db.Boolean, default=False)  # For reminder notifications
+    location = db.Column(db.String(50), nullable=False)
 
     user_nrel = db.relationship('User', backref='waste_collection_schedules', lazy=True)
 

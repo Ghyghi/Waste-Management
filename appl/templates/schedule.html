@@ -8,13 +8,21 @@
 
 {% block content %}
     <h1>Schedule Waste Collection</h1>
-    <form action="{{ url_for('/wastecollection') }}" method="post">
-        <label for="user_name">Username:</label>
-        <input type="text" id="user_name" name="user_name" required><br><br>
-
+    <form action="{{ url_for('schedule_collection') }}" method="post">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required><br><br>
+    
+        <label for="location">Location:</label>
+        <select id="location" name="location" required>
+            <option value="none"></option>
+            <option value="kacyiru">Kacyiru</option>
+            <option value="kabeza">Kabeza</option>
+            <option value="kanombe">Kanombe</option>
+        </select><br><br>
+    
         <label for="collection_date">Collection Date:</label>
-        <input type="date" id="collection_date" name="collection_date" required><br><br>
-
+        <input type="date" id="collection_date" name="collection_date" required min="{{ today }}"><br><br>
+    
         <label for="waste_type">Waste Type:</label>
         <select id="waste_type" name="waste_type" required>
             <option value="none"></option>
@@ -22,7 +30,8 @@
             <option value="non_recyclable">Non-Recyclable</option>
             <option value="general">General</option>
         </select><br><br>
-
+    
         <input type="submit" value="Schedule">
     </form>
+    
 {% endblock %}
