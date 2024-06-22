@@ -10,6 +10,15 @@ This project is a Smart Waste Management System built with Flask. It allows user
 - Track recycling efforts
 - View environmental impact metrics
 
+## Functionalities
+
+User Registration and Login
+Waste Collection Schedule
+Recycling Tracker
+Waste Collection Services Management
+Admin Dashboard
+
+
 ## Setup
 
 1. Clone the repository:
