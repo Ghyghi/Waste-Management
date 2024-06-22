@@ -9,8 +9,8 @@
 {% block content %}
     <h1>Schedule Waste Collection</h1>
     <form action="{{ url_for('/wastecollection') }}" method="post">
-        <label for="user_id">User ID:</label>
-        <input type="text" id="user_id" name="user_id" required><br><br>
+        <label for="user_name">Username:</label>
+        <input type="text" id="user_name" name="user_name" required><br><br>
 
         <label for="collection_date">Collection Date:</label>
         <input type="date" id="collection_date" name="collection_date" required><br><br>
