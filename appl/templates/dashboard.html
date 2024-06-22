@@ -1,22 +1,83 @@
-<!-- dashboard.html -->
-
 {% extends "base.html" %}
 
 {% block title %}Dashboard{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    <!-- Additional CSS for dashboard -->
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .recyclable {
+            background-color: #b8daff; /* Bootstrap info color */
+        }
+
+        .non-recyclable {
+            background-color: #ffc107; /* Bootstrap warning color */
+        }
+
+        .general-waste {
+            background-color: #dc3545; /* Bootstrap danger color */
+        }
+    </style>
+
+    <style>
+        /* Additional CSS for navbar */
+        .nav-bar {
+            background-color: #333;
+            padding: 10px 0;
+        }
+
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+
+        .nav-bar a:hover {
+            background-color: #575757;
+        }
+
+        .nav-bar a.active {
+            background-color: #4CAF50;
+        }
+    </style>
+{% endblock %}
 
 {% block content %}
 <div class="container">
     <h2><i class="fas fa-user-circle"></i> Dear, {{ session['username'] }}</h2>
 </div>
+
 <div class="nav-bar">
     {% include 'navbar.html' %}
 </div>
+
 <div class="explanations container">
     <p class="lead">Welcome to Smart Waste, where you can monitor your contribution to a green earth</p>
     <h3>These are some of the things you need to know when using the system</h3>
     <div class="row">
         <div class="col-md-4">
-            <div class="card" style="background-color: #78c2ad; /* Light green */">
+            <div class="card recyclable">
                 <div class="card-body">
                     <h5 class="card-title"><i class="fas fa-recycle"></i> Recyclable Waste</h5>
                     <p class="card-text">These are wastes that can be recycled. They include paper, plastic, glass, and metal.</p>
@@ -24,7 +85,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card" style="background-color: #ffc107; /* Yellow */">
+            <div class="card non-recyclable">
                 <div class="card-body">
                     <h5 class="card-title"><i class="fas fa-ban"></i> Non-Recyclable Waste</h5>
                     <p class="card-text">These are wastes that cannot be recycled. They include food waste, used tissues, and sanitary towels.</p>
@@ -32,7 +93,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card" style="background-color: #f67280; /* Coral */">
+            <div class="card general-waste">
                 <div class="card-body">
                     <h5 class="card-title"><i class="fas fa-trash-alt"></i> General Waste</h5>
                     <p class="card-text">These are wastes that do not fit into the other categories. They include broken glass, ceramics, and mirrors.</p>
