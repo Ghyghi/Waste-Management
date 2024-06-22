@@ -1,9 +1,12 @@
 <nav>
     <ul>
-        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url_for('tracker') }}">Effort Tracker</a></li>
+        <li><a class="active" href="{{ url_for('dashboard') }}">Dashboard</a></li>
         <li><a href="{{ url_for('schedule_collection') }}">Collection Schedule</a></li>
         <li><a href="{{ url_for('update_schedule') }}">Update Schedule</a></li>
+<<<<<<< HEAD
         <li><a href="{{ url_for('view_schedule') }}">View Schedules</a></li>
+=======
+        <li><a href="{{ url_for('tracker') }}">Effort Tracker</a></li>
+>>>>>>> 217bab135723d90540e1d9fd1b6f8fd47d962f3f
     </ul>
 </nav>
