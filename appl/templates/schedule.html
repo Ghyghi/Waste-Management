@@ -7,32 +7,32 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Schedule Waste Collection</h1>
+    <h1 style="text-align: center; color: #333;">Schedule Waste Collection</h1>
     {% include 'navbar.html' %}
-    <form action="{{ url_for('schedule_collection') }}" method="post">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
+    <form action="{{ url_for('schedule_collection') }}" method="post" style="max-width: 600px; margin: 20px auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+        <label for="username" style="font-weight: bold;">Username:</label>
+        <input type="text" id="username" name="username" required style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"><br><br>
     
-        <label for="location">Location:</label>
-        <select id="location" name="location" required>
+        <label for="location" style="font-weight: bold;">Location:</label>
+        <select id="location" name="location" required style="width: calc(100% - 22px); padding: 10px;">
             <option value="none"></option>
             <option value="kacyiru">Kacyiru</option>
             <option value="kabeza">Kabeza</option>
             <option value="kanombe">Kanombe</option>
         </select><br><br>
     
-        <label for="collection_date">Collection Date:</label>
-        <input type="date" id="collection_date" name="collection_date" required min="{{ today }}"><br><br>
+        <label for="collection_date" style="font-weight: bold;">Collection Date:</label>
+        <input type="date" id="collection_date" name="collection_date" required min="{{ today }}" style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"><br><br>
     
-        <label for="waste_type">Waste Type:</label>
-        <select id="waste_type" name="waste_type" required>
+        <label for="waste_type" style="font-weight: bold;">Waste Type:</label>
+        <select id="waste_type" name="waste_type" required style="width: calc(100% - 22px); padding: 10px;">
             <option value="none"></option>
             <option value="recyclable">Recyclable</option>
             <option value="non_recyclable">Non-Recyclable</option>
             <option value="general">General</option>
         </select><br><br>
     
-        <input type="submit" value="Schedule">
+        <input type="submit" value="Schedule" style="background-color: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px;">
     </form>
     
 {% endblock %}
