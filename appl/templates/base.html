@@ -7,9 +7,21 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
     {% block head %}{% endblock %}
+    <style>
+        .flash-message {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            background-color: #f0ad4e;
+            color: white;
+            font-size: 18px;
+            z-index: 1000;
+        }
+    </style>
 </head>
 <body>
-
 
 <header>
     <div class="container">
@@ -20,7 +32,7 @@
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item"><a class="nav-link" href="#">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Home</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" data-toggle="modal" data-target="#loginModal">Login</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" data-toggle="modal" data-target="#signupModal">Sign Up</a></li>
                     <li class="nav-item dropdown">
@@ -40,26 +52,21 @@
     </div>
 </header>
 
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div id="flash-message-container">
+                {% for category, message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+</div>
 
 <main>
     <div class="container text-center">
         {% block content %}{% endblock %}
-    </div>
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mt-3">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
     </div>
 </main>
 
@@ -68,6 +75,7 @@
         <p class="m-0 text-muted">&copy; Group 13 2024</p>
     </div>
 </footer>
+
 <!-- Login Modal -->
 <div class="modal fade" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -140,6 +148,18 @@
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            var flashMessageContainer = document.getElementById('flash-message-container');
+            if (flashMessageContainer) {
+                flashMessageContainer.style.display = 'none';
+            }
+        }, 1900); // 1.9 seconds
+    });
+</script>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>

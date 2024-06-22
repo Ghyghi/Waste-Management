@@ -22,19 +22,6 @@ class User(db.Model):
         return f'<username={self.username} role={self.role}>'
 
 
-class WasteCollection(db.Model):
-    __tablename__ = 'wastecollection'
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), db.ForeignKey('user.username'), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(20), nullable=False)  # 'scheduled', 'in_progress', 'completed', 'cancelled', 'missed', 'delayed'
-    waste_type = db.Column(db.Integer, db.ForeignKey('wastetype.id'), nullable=False)
-    location = db.Column(db.String(50), nullable=False)
-
-    def __repr__(self):
-        return f'<WasteCollection id={self.id} username={self.username} status={self.status}>'
-
 class RecyclingEffort(db.Model):
     __tablename__ = 'recyclingeffort'
 

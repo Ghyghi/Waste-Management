@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, Blueprint, session
 from datetime import datetime, timedelta
 from flask_mail import Mail
-from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
+from appl.db_models import db, User, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
 from appl.notifications import send_notification
 from werkzeug.exceptions import BadRequestKeyError
 
@@ -180,21 +180,32 @@ def register_routes(app):
     @app.route('/update_schedule', methods=['GET', 'POST'])
     def update_schedule():
         if request.method == 'POST':
-            data = request.form
-            schedule_id = data.get('schedule_id')
-            collection_date = datetime.strptime(data.get('collection_date'), '%Y-%m-%d')
-            waste_type = data.get('waste_type')
-            schedule = WasteCollectionSchedule.query.get(schedule_id)
-            if schedule:
+            try:
+                schedule_id = request.form.get('schedule_id')
+                collection_date = datetime.strptime(request.form.get('collection_date'), '%Y-%m-%d')
+                waste_type = request.form.get('waste_type')
+
+                if not schedule_id or not collection_date or not waste_type or waste_type == 'none':
+                    flash('All fields are required!', 'danger')
+                    return redirect(url_for('update_schedule'))
+
+                schedule = WasteCollectionSchedule.query.get(schedule_id)
+                if not schedule:
+                    flash('Schedule not found!', 'danger')
+                    return redirect(url_for('update_schedule'))
+
                 schedule.collection_date = collection_date
                 schedule.waste_type = waste_type
                 db.session.commit()
-                send_notification(schedule.username, 'Collection updated successfully!', 'update')
-                flash_message('Schedule updated successfully!', 'success')
-            else:
-                flash_message('Schedule not found.', 'error')
-            return redirect(url_for('update_schedule'))
-        return render_template('update_schedule.html')
+                flash('Schedule updated successfully!', 'success')
+                return redirect(url_for('update_schedule'))
+
+            except Exception as e:
+                flash(f'An error occurred: {str(e)}', 'danger')
+                return redirect(url_for('update_schedule'))
+
+        today = datetime.today().strftime('%Y-%m-%d')
+        return render_template('update_schedule.html', today=today)
 
     @app.route('/notifications', methods=['GET'])
     def view_notifications():
