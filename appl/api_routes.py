@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 from flask_mail import Mail
 from appl.db_models import db, User, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
 from appl.notifications import send_notification
-from werkzeug.exceptions import BadRequestKeyError
+from flask_login import login_required, current_user, logout_user
+
 
 app = Flask(__name__)
 mail = Mail(app)
@@ -97,9 +98,9 @@ def register_routes(app):
         return render_template('index.html')
 
     @app.route('/logout')
+    @login_required
     def logout():
-        session.pop('username', None)
-        flash_message('You have been logged out.', 'info')
+        logout_user()
         return redirect(url_for('login'))
 
     @app.route('/create_user', methods=['POST', 'GET'])
@@ -206,6 +207,12 @@ def register_routes(app):
 
         today = datetime.today().strftime('%Y-%m-%d')
         return render_template('update_schedule.html', today=today)
+
+    @app.route('/view_schedule')
+    @login_required
+    def view_schedule():
+        schedule = WasteCollectionSchedule.query.filter_by(username=current_user.username).all()
+        return render_template('view_schedule.html', schedule=schedule)
 
     @app.route('/notifications', methods=['GET'])
     def view_notifications():
