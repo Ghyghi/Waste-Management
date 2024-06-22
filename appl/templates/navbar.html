@@ -1,7 +1,13 @@
-<nav>
-    <ul>
-        <li><a class="active" href="{{ url_for('dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url_for('schedule_collection') }}">Collection Schedule</a></li>
-        <li><a href="{{ url_for('update_schedule') }}">Update Schedule</a></li>
+<nav style="background-color: #333; overflow: hidden;">
+    <ul style="list-style-type: none; margin: 0; padding: 0; text-align: center;">
+        <li style="display: inline-block;">
+            <a href="{{ url_for('dashboard') }}" style="display: block; color: white; text-decoration: none; padding: 14px 16px;">Dashboard</a>
+        </li>
+        <li style="display: inline-block;">
+            <a href="{{ url_for('schedule_collection') }}" style="display: block; color: white; text-decoration: none; padding: 14px 16px;">Collection Schedule</a>
+        </li>
+        <li style="display: inline-block;">
+            <a href="{{ url_for('update_schedule') }}" style="display: block; color: white; text-decoration: none; padding: 14px 16px;">Update Schedule</a>
+        </li>
     </ul>
 </nav>
