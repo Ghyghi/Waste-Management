@@ -1,7 +1,12 @@
 from . import db
 from datetime import datetime
+from flask_login import UserMixin
+from . import db, login_manager
 
-class User(db.Model):
+
+
+
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
 
     username = db.Column(db.String(80), primary_key=True, nullable=False)
@@ -82,3 +87,6 @@ class Notification(db.Model):
     def __repr__(self):
         return f'<Notification id={self.id} username={self.username} message={self.message} type={self.type}>'
     
+@login_manager.user_loader
+def load_user(username):
+    return User.query.get(username)
