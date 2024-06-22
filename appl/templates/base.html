@@ -9,6 +9,8 @@
     {% block head %}{% endblock %}
 </head>
 <body>
+
+
 <header>
     <div class="container">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -37,18 +39,7 @@
         </nav>
     </div>
 </header>
-{% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash-messages">
-                {% for message in messages %}
-                    <div class="alert alert-info">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-{% block navbar %}{% endblock %}
+
 
 <main>
     <div class="container text-center">

@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, Blueprint, session
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_mail import Mail
 from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
 from appl.notifications import send_notification
@@ -7,6 +7,9 @@ from appl.notifications import send_notification
 app = Flask(__name__)
 mail = Mail(app)
 api = Blueprint('api', __name__)
+
+def flash_message(message, category):
+    flash(message, category)
 
 def register_routes(app):
     # Web App Routes
@@ -19,13 +22,13 @@ def register_routes(app):
         if 'username' in session:
             return render_template('dashboard.html')
         else:
-            flash('You need to log in first.', 'error')
+            flash_message('You need to log in first.', 'error')
             return redirect(url_for('login'))
 
     @app.route('/tracker', methods=['GET', 'POST'])
     def tracker():
         if 'username' not in session:
-            flash('You need to log in first.')
+            flash_message('You need to log in first.', 'error')
             return redirect(url_for('login'))
 
         username = session['username']
@@ -34,35 +37,36 @@ def register_routes(app):
             waste_name = request.form['waste_type']
             amount = request.form['amount']
 
-            new_recycling_effort = RecyclingEffort(user_name=username, waste_name=waste_name, amount=amount, date=datetime.utcnow())
+            new_recycling_effort = RecyclingEffort(username=username, waste_name=waste_name, amount=amount, date=datetime.utcnow())
             db.session.add(new_recycling_effort)
             db.session.commit()
-            flash('Thank you for recycling! You are making the world cleaner.')
+            flash_message('Thank you for recycling! You are making the world cleaner.', 'success')
             return redirect(url_for('tracker'))
 
-        records = RecyclingEffort.query.filter_by(user_name=username).order_by(RecyclingEffort.date.desc()).all()
+        records = RecyclingEffort.query.filter_by(username=username).order_by(RecyclingEffort.date.desc()).all()
         last_month_total = db.session.query(db.func.sum(RecyclingEffort.amount)).filter(
             db.func.strftime('%Y-%m', RecyclingEffort.date) == (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m'),
-            RecyclingEffort.user_name == username
+            RecyclingEffort.username == username
         ).scalar() or 0
 
         show_congrats = last_month_total > 0
 
-        total_recycled = db.session.query(db.func.sum(RecyclingEffort.amount)).filter_by(user_name=username).scalar() or 0
-        monthly_average = total_recycled / max(1, db.session.query(db.func.count(db.distinct(db.func.strftime('%Y-%m', RecyclingEffort.date)))).filter_by(user_name=username).scalar())
+        total_recycled = db.session.query(db.func.sum(RecyclingEffort.amount)).filter_by(username=username).scalar() or 0
+        monthly_average = total_recycled / max(1, db.session.query(db.func.count(db.distinct(db.func.strftime('%Y-%m', RecyclingEffort.date)))).filter_by(username=username).scalar())
 
         current_month_total = db.session.query(db.func.sum(RecyclingEffort.amount)).filter(
             db.func.strftime('%Y-%m', RecyclingEffort.date) == datetime.utcnow().strftime('%Y-%m'),
-            RecyclingEffort.user_name == username
+            RecyclingEffort.username == username
         ).scalar() or 0
 
         # Data for the chart
         chart_labels = [record.date.strftime('%Y-%m-%d') for record in records]
         chart_data = [record.amount for record in records]
 
-        return render_template('tracker.html', records=records, last_month_total=last_month_total, show_congrats=show_congrats,
+        return render_template('tracker_dashboard.html', records=records, last_month_total=last_month_total, show_congrats=show_congrats,
                             total_recycled=total_recycled, monthly_average=monthly_average, current_month_total=current_month_total,
                             chart_labels=chart_labels, chart_data=chart_data)
+
 
     @app.route('/login', methods=['GET', 'POST'])
     def login():
@@ -71,7 +75,7 @@ def register_routes(app):
             password = request.form.get('password')
 
             if not username or not password:
-                flash('Username and password are required.', 'error')
+                flash_message('Username and password are required.', 'error')
                 return redirect(url_for('login'))
 
             try:
@@ -79,14 +83,14 @@ def register_routes(app):
 
                 if user and user.password == password:
                     session['username'] = user.username
-                    flash('Login successful!', 'success')
+                    flash_message('Login successful!', 'success')
                     return redirect(url_for('dashboard'))
                 else:
-                    flash('Invalid Username or password.', 'error')
+                    flash_message('Invalid Username or password.', 'error')
                     return redirect(url_for('login'))
 
             except Exception as e:
-                flash(f"An error occurred: {str(e)}", 'error')
+                flash_message(f"An error occurred: {str(e)}", 'error')
                 return redirect(url_for('login'))
 
         return render_template('index.html')
@@ -94,7 +98,7 @@ def register_routes(app):
     @app.route('/logout')
     def logout():
         session.pop('username', None)
-        flash('You have been logged out.', 'info')
+        flash_message('You have been logged out.', 'info')
         return redirect(url_for('login'))
 
     @app.route('/create_user', methods=['POST', 'GET'])
@@ -108,24 +112,24 @@ def register_routes(app):
             # Check if the role is valid
             valid_roles = ['household', 'admin', 'service']
             if role not in valid_roles:
-                flash('Invalid role selected.', 'error')
+                flash_message('Invalid role selected.', 'error')
                 return redirect(url_for('create_user'))
 
             # Check for existing username and email
             if User.query.filter_by(username=username).first():
-                flash('Username already exists.', 'error')
+                flash_message('Username already exists.', 'error')
                 return redirect(url_for('create_user'))
             if User.query.filter_by(email=email).first():
-                flash('Email already exists.', 'error')
+                flash_message('Email already exists.', 'error')
                 return redirect(url_for('create_user'))
 
             # Validate form inputs
             if len(email) < 4:
-                flash('Email must be greater than 3 characters.', 'error')
+                flash_message('Email must be greater than 3 characters.', 'error')
             elif len(username) < 2:
-                flash('Username must be greater than 1 character.', 'error')
+                flash_message('Username must be greater than 1 character.', 'error')
             elif len(password) < 7:
-                    flash('Password must be at least 7 characters.', 'error')
+                flash_message('Password must be at least 7 characters.', 'error')
             else:
                 # Create new user
 
@@ -133,8 +137,8 @@ def register_routes(app):
                 
                 db.session.add(new_user)
                 db.session.commit()
-                flash(f'User created successfully.', 'success')
-                flash('Please login to continue', 'info')
+                flash_message('User created successfully.', 'success')
+                flash_message('Please login to continue', 'info')
                 return redirect(url_for('login'))
                 
         
@@ -150,6 +154,7 @@ def register_routes(app):
             db.session.add(new_schedule)
             db.session.commit()
             send_notification(username, 'Collection scheduled successfully!', 'confirmation')
+            flash_message('Collection scheduled successfully!', 'success')
             return redirect(url_for('schedule_collection'))
         return render_template('schedule.html')
 
@@ -166,9 +171,9 @@ def register_routes(app):
                 schedule.waste_type = waste_type
                 db.session.commit()
                 send_notification(schedule.username, 'Collection updated successfully!', 'update')
-                flash('Schedule updated successfully!', 'success')
+                flash_message('Schedule updated successfully!', 'success')
             else:
-                flash('Schedule not found.', 'error')
+                flash_message('Schedule not found.', 'error')
             return redirect(url_for('update_schedule'))
         return render_template('update_schedule.html')
 
@@ -176,7 +181,7 @@ def register_routes(app):
     def view_notifications():
         username = session.get('username')
         if not username:
-            flash('You need to log in first.', 'error')
+            flash_message('You need to log in first.', 'error')
             return redirect(url_for('login'))
         notifications = Notification.query.filter_by(username=username).order_by(Notification.date.desc()).all()
         return render_template('notifications.html', notifications=notifications)
@@ -224,7 +229,6 @@ def register_routes(app):
         user = User.query.get(username)
         if user:
             user.username = data.get('username', user.username)
-            user.role = data.get('role', user.role)
             user.email = data.get('email', user.email)
             user.password = generate_password_hash(data.get('password')) if data.get('password') else user.password
             try:
