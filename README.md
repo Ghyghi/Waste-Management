@@ -1,4 +1,4 @@
-# Smart Waste
+# Smart Waste Web
 
 ## Overview
 
