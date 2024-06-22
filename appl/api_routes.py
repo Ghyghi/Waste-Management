@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, flash, Blueprint, session
 from datetime import datetime
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_mail import Mail, Message
-from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification, Credentials
+from flask_mail import Mail
+from appl.db_models import db, User, WasteCollection, RecyclingEffort, Locations, WasteType, WasteCollectionSchedule, Notification
 from appl.notifications import send_notification
 
 app = Flask(__name__)
@@ -17,38 +16,85 @@ def register_routes(app):
     
     @app.route('/dashboard')
     def dashboard():
-        if 'user_id' in session:
+        if 'username' in session:
             return render_template('dashboard.html')
         else:
             flash('You need to log in first.', 'error')
             return redirect(url_for('login'))
 
+    @app.route('/tracker', methods=['GET', 'POST'])
+    def tracker():
+        if 'username' not in session:
+            flash('You need to log in first.')
+            return redirect(url_for('login'))
+
+        username = session['username']
+
+        if request.method == 'POST':
+            waste_name = request.form['waste_type']
+            amount = request.form['amount']
+
+            new_recycling_effort = RecyclingEffort(user_name=username, waste_name=waste_name, amount=amount, date=datetime.utcnow())
+            db.session.add(new_recycling_effort)
+            db.session.commit()
+            flash('Thank you for recycling! You are making the world cleaner.')
+            return redirect(url_for('tracker'))
+
+        records = RecyclingEffort.query.filter_by(user_name=username).order_by(RecyclingEffort.date.desc()).all()
+        last_month_total = db.session.query(db.func.sum(RecyclingEffort.amount)).filter(
+            db.func.strftime('%Y-%m', RecyclingEffort.date) == (datetime.utcnow() - timedelta(days=30)).strftime('%Y-%m'),
+            RecyclingEffort.user_name == username
+        ).scalar() or 0
+
+        show_congrats = last_month_total > 0
+
+        total_recycled = db.session.query(db.func.sum(RecyclingEffort.amount)).filter_by(user_name=username).scalar() or 0
+        monthly_average = total_recycled / max(1, db.session.query(db.func.count(db.distinct(db.func.strftime('%Y-%m', RecyclingEffort.date)))).filter_by(user_name=username).scalar())
+
+        current_month_total = db.session.query(db.func.sum(RecyclingEffort.amount)).filter(
+            db.func.strftime('%Y-%m', RecyclingEffort.date) == datetime.utcnow().strftime('%Y-%m'),
+            RecyclingEffort.user_name == username
+        ).scalar() or 0
+
+        # Data for the chart
+        chart_labels = [record.date.strftime('%Y-%m-%d') for record in records]
+        chart_data = [record.amount for record in records]
+
+        return render_template('tracker.html', records=records, last_month_total=last_month_total, show_congrats=show_congrats,
+                            total_recycled=total_recycled, monthly_average=monthly_average, current_month_total=current_month_total,
+                            chart_labels=chart_labels, chart_data=chart_data)
+
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         if request.method == 'POST':
-            id = request.form.get('id')
+            username = request.form.get('username')
             password = request.form.get('password')
+
+            if not username or not password:
+                flash('Username and password are required.', 'error')
+                return redirect(url_for('login'))
+
             try:
-                user = Credentials.query.filter_by(id=id).first()
-                if user and check_password_hash(user.password, password):
-                    session['user_id'] = user.id
+                user = User.query.filter_by(username=username).first()
+
+                if user and user.password == password:
                     session['username'] = user.username
                     flash('Login successful!', 'success')
                     return redirect(url_for('dashboard'))
                 else:
-                    flash('Invalid ID or password.', 'error')
-                if not id or not password:
-                    flash('ID and password are required.', 'error')
-                return redirect(url_for('login'))
+                    flash('Invalid Username or password.', 'error')
+                    return redirect(url_for('login'))
+
             except Exception as e:
                 flash(f"An error occurred: {str(e)}", 'error')
                 return redirect(url_for('login'))
+
         return render_template('index.html')
 
     @app.route('/logout')
     def logout():
-        session.pop('user_id', None)
         session.pop('username', None)
+        flash('You have been logged out.', 'info')
         return redirect(url_for('login'))
 
     @app.route('/create_user', methods=['POST', 'GET'])
@@ -79,33 +125,31 @@ def register_routes(app):
             elif len(username) < 2:
                 flash('Username must be greater than 1 character.', 'error')
             elif len(password) < 7:
-                flash('Password must be at least 7 characters.', 'error')
+                    flash('Password must be at least 7 characters.', 'error')
             else:
                 # Create new user
-                hashed_password = generate_password_hash(password)
 
-                new_user = User(email=email, password=hashed_password, username=username, role=role) 
+                new_user = User(email=email, password=password, username=username, role=role) 
                 
                 db.session.add(new_user)
                 db.session.commit()
-                flash(f'User created successfully. User ID: {new_user.id}', 'success')
+                flash(f'User created successfully.', 'success')
                 flash('Please login to continue', 'info')
                 return redirect(url_for('login'))
                 
         
         return render_template('index.html')
 
-
     @app.route('/schedule', methods=['GET', 'POST'])
     def schedule_collection():
         if request.method == 'POST':
-            user_id = request.form['user_id']
+            username = request.form['username']
             collection_date = datetime.strptime(request.form['collection_date'], '%Y-%m-%dT%H:%M')
             waste_type = request.form['waste_type']
-            new_schedule = WasteCollectionSchedule(user_id=user_id, collection_date=collection_date, waste_type=waste_type, status='scheduled')
+            new_schedule = WasteCollectionSchedule(username=username, collection_date=collection_date, waste_type=waste_type, status='scheduled')
             db.session.add(new_schedule)
             db.session.commit()
-            send_notification(user_id, 'Collection scheduled successfully!', 'confirmation')
+            send_notification(username, 'Collection scheduled successfully!', 'confirmation')
             return redirect(url_for('schedule_collection'))
         return render_template('schedule.html')
 
@@ -121,7 +165,7 @@ def register_routes(app):
                 schedule.collection_date = collection_date
                 schedule.waste_type = waste_type
                 db.session.commit()
-                send_notification(schedule.user_id, 'Collection updated successfully!', 'update')
+                send_notification(schedule.username, 'Collection updated successfully!', 'update')
                 flash('Schedule updated successfully!', 'success')
             else:
                 flash('Schedule not found.', 'error')
@@ -130,11 +174,11 @@ def register_routes(app):
 
     @app.route('/notifications', methods=['GET'])
     def view_notifications():
-        user_id = session.get('user_id')
-        if not user_id:
+        username = session.get('username')
+        if not username:
             flash('You need to log in first.', 'error')
             return redirect(url_for('login'))
-        notifications = Notification.query.filter_by(user_id=user_id).order_by(Notification.date.desc()).all()
+        notifications = Notification.query.filter_by(username=username).order_by(Notification.date.desc()).all()
         return render_template('notifications.html', notifications=notifications)
 
     # API Routes
@@ -150,19 +194,18 @@ def register_routes(app):
         user = User.query.filter_by(username=username).first()
         if user:
             return jsonify({'message': 'Username already exists.'}), 409
-        hashed_password = generate_password_hash(password)
-        new_user = User(username=username, email=email, password=hashed_password, role=role)
+        new_user = User(username=username, email=email, password=password, role=role)
         try:
             db.session.add(new_user)
             db.session.commit()
-            return jsonify({'message': 'User created successfully', 'user_id': new_user.id}), 201
+            return jsonify({'message': 'User created successfully'}), 201
         except Exception as e:
             db.session.rollback()
             return jsonify({'message': 'Failed to create user', 'error': str(e)}), 500
 
-    @api.route('/users/<int:user_id>', methods=['GET'])
-    def api_get_user(user_id):
-        user = User.query.get(user_id)
+    @api.route('/users/<int:username>', methods=['GET'])
+    def api_get_user(username):
+        user = User.query.get(username)
         if user:
             return jsonify(user.__dict__), 200
         else:
@@ -173,12 +216,12 @@ def register_routes(app):
         users = User.query.all()
         return jsonify([user.__dict__ for user in users]), 200
 
-    @api.route('/users/<int:user_id>', methods=['PUT'])
-    def api_update_user(user_id):
+    @api.route('/users/<int:username>', methods=['PUT'])
+    def api_update_user(username):
         if not request.is_json:
             return jsonify({'message': 'Unsupported Media Type'}), 415
         data = request.json
-        user = User.query.get(user_id)
+        user = User.query.get(username)
         if user:
             user.username = data.get('username', user.username)
             user.role = data.get('role', user.role)
@@ -193,9 +236,9 @@ def register_routes(app):
         else:
             return jsonify({'message': 'User not found'}), 404
 
-    @api.route('/users/<int:user_id>', methods=['DELETE'])
-    def api_delete_user(user_id):
-        user = User.query.get(user_id)
+    @api.route('/users/<int:username>', methods=['DELETE'])
+    def api_delete_user(username):
+        user = User.query.get(username)
         if user:
             try:
                 db.session.delete(user)
@@ -213,7 +256,7 @@ def register_routes(app):
             return jsonify({'message': 'Unsupported Media Type'}), 415
         data = request.json
         new_collection = WasteCollection(
-            user_id=data['user_id'],
+            username=data['username'],
             date=data['date'],
             status=data['status'],
             waste_type=data['waste_type'],

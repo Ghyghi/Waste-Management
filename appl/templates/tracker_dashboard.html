@@ -16,12 +16,40 @@
         <p class="text-info">Last month, you recycled a total of <strong>{{ last_month_total }} kg</strong> of waste. Congratulations on your achievement!</p>
         {% endif %}
     </div>
+    
+    <!-- New section for statistics and graphs -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Recycling Statistics
+                </div>
+                <div class="card-body">
+                    <p>Total Recycled: <strong>{{ total_recycled }} kg</strong></p>
+                    <p>Monthly Average: <strong>{{ monthly_average }} kg</strong></p>
+                    <p>Current Month: <strong>{{ current_month_total }} kg</strong></p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Recycling Trends
+                </div>
+                <div class="card-body">
+                    <!-- Placeholder for chart -->
+                    <canvas id="recyclingChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card mb-4">
         <div class="card-header">
             Add a New Recycling Record
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ url_for('create_recycling_effort') }}" id="recycling-form">
+            <form method="POST" action="{{ url_for('tracker') }}" id="recycling-form">
                 <div class="form-group">
                     <label for="waste_type">Waste Type:</label>
                     <input type="text" name="waste_type" class="form-control" required>
@@ -34,17 +62,19 @@
             </form>
         </div>
     </div>
+    
     <h4>Recycling History</h4>
-    <ul class="list-group">
+    <ul class="list-group mb-4">
         {% for record in records %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span><strong>{{ record.date.strftime('%Y-%m-%d') }}:</strong> {{ record.amount }} kg of {{ record.material_type }}</span>
+            <span><strong>{{ record.date.strftime('%Y-%m-%d') }}:</strong> {{ record.amount }} kg of {{ record.waste_name }}</span>
             <span class="badge badge-primary badge-pill">{{ record.amount }} kg</span>
         </li>
         {% endfor %}
     </ul>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.getElementById('recycling-form').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -63,6 +93,28 @@
                 alert('There was an error. Please try again.');
             }
         });
+    });
+
+    // Placeholder for chart initialization
+    const ctx = document.getElementById('recyclingChart').getContext('2d');
+    const recyclingChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_labels | tojson }},
+            datasets: [{
+                label: 'Recycled Waste (kg)',
+                data: {{ chart_data | tojson }},
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        }
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
     });
 </script>
 

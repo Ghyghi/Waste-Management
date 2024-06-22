@@ -1,4 +1,3 @@
-# tests/test_app.py
 import unittest
 from appl import create_app, db
 from appl.db_models import User
@@ -21,7 +20,7 @@ class AppTestCase(unittest.TestCase):
 
     def test_user_creation(self):
         with self.app.app_context():
-            user = User(username='testuser', role='household', email='test@example.com')
+            user = User(username='testuser', role='household', email='test@example.com', password='password')
             db.session.add(user)
             db.session.commit()
             self.assertIsNotNone(User.query.filter_by(username='testuser').first())
