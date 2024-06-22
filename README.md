@@ -1,4 +1,4 @@
-# Smart Waste Management System
+# Smart Waste
 
 ## Overview
 
