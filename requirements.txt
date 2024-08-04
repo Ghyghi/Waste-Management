@@ -2,6 +2,7 @@ alembic==1.13.2
 blinker==1.8.2
 click==8.1.7
 colorama==0.4.6
+email_validator
 Flask==3.0.3
 Flask-Login==0.6.3
 Flask-Mail==0.10.0

@@ -67,3 +67,4 @@ def send_email(user_email, subject, html_content):
     except Exception as error:
         print(f'An error occurred: {error}')
         return None
+    

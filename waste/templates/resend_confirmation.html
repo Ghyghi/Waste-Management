@@ -1,34 +1,22 @@
 {% extends 'base.html' %}
-{% block title %}Login{% endblock %}
+{% block head %}
+    <title>Resend Confirmation Email</title>
+{% endblock %}
 {% block content %}
-<main>
     <div class="container">
-        <h2>Login</h2>
-        <form id="loginForm" method="POST" action="/login" novalidate>
+        <h2>Resend Confirmation Email</h2>
+        <form id="resendConfirmationForm" method="POST" action="" novalidate>
             {{ form.hidden_tag() }}
 
             <div class="form-group">
-                {{ form.username.label }}
-                {{ form.username(class="form-control", placeholder="Enter your username") }}
-                <div class="invalid-feedback">Please enter your username.</div>
-            </div>
-
-            <div class="form-group">
-                {{ form.password.label }}
-                {{ form.password(class="form-control", placeholder="Enter your password") }}
-                <div class="invalid-feedback">Please enter your password.</div>
-            </div>
-            <div class="form-group">
-                {{ form.role.label }}
-                {{ form.role(class="form-control", placeholder="Enter your role") }}
-                <div class="invalid-feedback">Please enter a valid role.</div>
+                {{ form.email.label }}
+                {{ form.email(class="form-control", placeholder="Enter your email", size=32) }}
+                <div class="invalid-feedback">Please enter a valid email address.</div>
             </div>
 
             {{ form.submit(class="btn btn-primary") }}
         </form>
-        <a href="/forgot_password">Forgot Password</a>
     </div>
-</main>
 
 <style>
     body {
@@ -87,7 +75,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('loginForm');
+        const form = document.getElementById('resendConfirmationForm');
         const inputs = form.querySelectorAll('.form-control');
 
         form.addEventListener('submit', function(event) {
