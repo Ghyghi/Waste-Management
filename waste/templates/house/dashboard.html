@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-
 {% block head %}
 <title>Dashboard</title>
 <style>
@@ -57,11 +56,13 @@
     }
 </style>
 {% endblock %}
-
+{% block header %}
+{% include 'house/navbar.html' %}
+{% endblock %}
 {% block content %}
 <div class="container">
     <h2>Welcome to Smart Waste</h2>
-    <p class="lead">Where you can monitor your contribution to a green earth</p>
+    <p class="lead">The smart way to schedule your waste collection</p>
 </div>
 
 

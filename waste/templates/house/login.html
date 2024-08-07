@@ -4,7 +4,7 @@
 <main>
     <div class="container">
         <h2>Login</h2>
-        <form id="loginForm" method="POST" action="/login" novalidate>
+        <form id="loginForm" method="POST" action="/house/login" novalidate>
             {{ form.hidden_tag() }}
 
             <div class="form-group">
@@ -17,11 +17,6 @@
                 {{ form.password.label }}
                 {{ form.password(class="form-control", placeholder="Enter your password") }}
                 <div class="invalid-feedback">Please enter your password.</div>
-            </div>
-            <div class="form-group">
-                {{ form.role.label }}
-                {{ form.role(class="form-control", placeholder="Enter your role") }}
-                <div class="invalid-feedback">Please enter a valid role.</div>
             </div>
 
             {{ form.submit(class="btn btn-primary") }}

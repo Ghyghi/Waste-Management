@@ -1,50 +1,27 @@
 {% extends 'base.html' %}
-{% block title %}Register{% endblock %}
+{% block title %}Admin Login{% endblock %}
 {% block content %}
 <main>
     <div class="container">
-        <h2>Register</h2>
-        <form id="registerForm" method="POST" action="/register" novalidate>
+        <h2>Admin Login</h2>
+        <form id="loginForm" method="POST" action="/admin/login" novalidate>
             {{ form.hidden_tag() }}
 
             <div class="form-group">
-                {{ form.firstname.label }}
-                {{ form.firstname(class="form-control", placeholder="Enter your first name") }}
-                <div class="invalid-feedback">Please enter a valid first name.</div>
-            </div>
-
-            <div class="form-group">
-                {{ form.secondname.label }}
-                {{ form.secondname(class="form-control", placeholder="Enter your second name") }}
-                <div class="invalid-feedback">Please enter a valid second name.</div>
-            </div>
-
-            <div class="form-group">
-                {{ form.username.label }}
-                {{ form.username(class="form-control", placeholder="Enter your username") }}
-                <div class="invalid-feedback">Please enter a valid username.</div>
-            </div>
-
-            <div class="form-group">
-                {{ form.email.label }}
-                {{ form.email(class="form-control", placeholder="Enter your email") }}
-                <div class="invalid-feedback">Please enter a valid email address.</div>
+                {{ form.companyname.label }}
+                {{ form.companyname(class="form-control", placeholder="Enter your comapny name") }}
+                <div class="invalid-feedback">Please enter your comapny name.</div>
             </div>
 
             <div class="form-group">
                 {{ form.password.label }}
                 {{ form.password(class="form-control", placeholder="Enter your password") }}
-                <div class="invalid-feedback">Please enter a valid password.</div>
-            </div>
-
-            <div class="form-group">
-                {{ form.role.label }}
-                {{ form.role(class="form-control", placeholder="Enter your role") }}
-                <div class="invalid-feedback">Please enter a valid role.</div>
+                <div class="invalid-feedback">Please enter your password.</div>
             </div>
 
             {{ form.submit(class="btn btn-primary") }}
         </form>
+        <a href="/forgot_password">Forgot Password</a>
     </div>
 </main>
 
@@ -105,7 +82,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const form = document.getElementById('registerForm');
+        const form = document.getElementById('loginForm');
         const inputs = form.querySelectorAll('.form-control');
 
         form.addEventListener('submit', function(event) {

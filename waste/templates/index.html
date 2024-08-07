@@ -49,16 +49,6 @@
         <h2>Smart Waste Collector</h2>
         <p>The smart way to schedule your waste collection</p>       
             <div>
-                <form action="/login">
-                    <button class="button">Login</button>
-                </form>
-            </div>
-            <div>
-                <form action="/register">
-                    <button class="button button-blue">Register</button>
-                </form>
-            </div>
-            <div>
                 <form action="/resend_confirmation">
                     <button class="button button-blue">Resend Confirmation</button>
                 </form>
@@ -66,88 +56,24 @@
     </div>
 </section>
 <section>
-    <h3>What to expect</h3>
-    <div class="container">
-        <!-- Feature Section -->
-        <section class="feature-section">
-            <div class="row">
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/environmental impact.avif') }}" alt="Environmental Impact" class="feature-image">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Environmental Impact</h3>
-                            <p class="feature-description">Understanding and mitigating environmental impact.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/recycle.avif') }}" alt="Recycle" class="feature-image">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Recycle</h3>
-                            <p class="feature-description">Encouraging recycling practices for a cleaner environment.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/quality service.avif') }}" alt="Quality Service" class="feature-image">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Quality Service</h3>
-                            <p class="feature-description">Ensuring high standards of service delivery.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/eco-friendly.avif') }}" alt="Eco-friendly" class="feature-image" style="height: auto; max-height: 200px;">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Eco-friendly</h3>
-                            <p class="feature-description">Promoting eco-friendly practices and solutions.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/schedule.avif') }}" alt="Schedule" class="feature-image" style="height: auto; max-height: 200px;">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Schedule</h3>
-                            <p class="feature-description">Manage waste collection schedules efficiently.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/eco-friendly.avif') }}" alt="Eco-friendly" class="feature-image" style="height: auto; max-height: 200px;">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Cleaning Dusterbin</h3>
-                            <p class="feature-description">Manage your waste collection schedule with ease.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/Cleanest-city-in-africa-Kigali.jpg') }}" alt="Good Nature" class="feature-image">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Good Nature</h3>
-                            <p class="feature-description">Track your recycling efforts and reduce environmental impact.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="feature-item">
-                        <img src="{{ url_for('static', filename='images/customer support.avif') }}" alt="Customer Support" class="feature-image">
-                        <div class="feature-content">
-                            <h3 class="feature-title">Customer Support</h3>
-                            <p class="feature-description">Assistance available for any issues or questions.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <h3>Our Types of Users</h3>
+    <div>
+        <h4>Household Users</h4>
+        <p>These are the individual households that book for waste collection services through our paltform.</p>
+        <a href="/house/register">Register as Household</a><br>
+        <a href="/house/login">Login as Household</a>
+    </div>
+    <div>
+        <h4>Waste Collector Users</h4>
+        <p>Collector users are the ones who do the actual collections.<br>They work for waste collection companies.</p>
+        <a href="">Register as Collector</a><br>
+        <a href="">Login as Collector</a>
+    </div>
+    <div>
+        <h4>Adminstration Users</h4>
+        <p>These are the management employees of different companies.<br>They work for waste collection companies, but they handle the company's profile on our platform.</p>
+        <a href="/admin/register">Register as Admin</a><br>
+        <a href="/admin/login">Login as Admin</a>
     </div>
 </section>
 {% endblock %}

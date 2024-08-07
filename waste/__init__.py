@@ -25,12 +25,28 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'login'
 
-    from .models import User
+    from .models import HouseUser, AdminUser, CollectorUser
     from .routes import register_routes
 
     @login_manager.user_loader
-    def load_user(username):
-        return User.query.get(username)
+    def load_user(user_id):
+        # Attempt to find the user by user_id in HouseUser
+        houseuser = HouseUser.query.get(user_id)
+        if houseuser:
+            return houseuser
+        
+        # Attempt to find the user by companyname in AdminUser
+        adminuser = AdminUser.query.get(user_id)
+        if adminuser:
+            return adminuser
+        
+        # Attempt to find the user by collector_id in CollectorUser
+        collectoruser = CollectorUser.query.get(user_id)
+        if collectoruser:
+            return collectoruser
+        
+        # If no user found
+        return None
     
     with app.app_context():
         db.create_all()
